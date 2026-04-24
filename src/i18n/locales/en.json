@@ -1,0 +1,61 @@
+{
+  "app": {
+    "title": "Sudoku",
+    "subtitle": "Classic sudoku and more game modes"
+  },
+  "menu": {
+    "newGame": "New game",
+    "continue": "Continue",
+    "settings": "Settings",
+    "stats": "Statistics",
+    "chooseDifficulty": "Choose difficulty",
+    "gameInProgress": "{{difficulty}} game in progress — {{time}}"
+  },
+  "difficulty": {
+    "label": "Difficulty",
+    "easy": "Easy",
+    "medium": "Medium",
+    "hard": "Hard",
+    "expert": "Expert"
+  },
+  "game": {
+    "undo": "Undo",
+    "erase": "Erase",
+    "notes": "Notes",
+    "hint": "Hint",
+    "pause": "Pause",
+    "resume": "Resume",
+    "time": "Time",
+    "mistakes": "Mistakes",
+    "mistakesLimit": "{{current}} / {{max}}",
+    "hintsUsed": "Hints",
+    "paused": "Paused",
+    "completed": "Solved!",
+    "failed": "Too many mistakes",
+    "failedDescription": "You reached the limit of {{max}} mistakes.",
+    "yourTime": "Your time",
+    "newGame": "New game",
+    "backToMenu": "Back to menu",
+    "generating": "Generating puzzle…",
+    "hintTimePenalty": "+30 s"
+  },
+  "settings": {
+    "title": "Settings",
+    "maxMistakes": "Mistake limit",
+    "maxMistakesUnlimited": "Unlimited",
+    "maxMistakesValue": "{{count}} mistakes",
+    "highlightSameDigits": "Highlight same digits",
+    "autoRemoveNotes": "Auto-remove notes",
+    "resetDefaults": "Reset defaults",
+    "close": "Done"
+  },
+  "language": {
+    "label": "Language",
+    "cs": "Czech",
+    "en": "English"
+  },
+  "install": {
+    "title": "Install as app",
+    "subtitle": "Offline, quick launch, no browser chrome"
+  }
+}

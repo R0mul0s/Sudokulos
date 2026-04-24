@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#0f172a"/>
+  <g transform="translate(156 156)">
+    <rect x="0" y="0" width="200" height="200" fill="none" stroke="#ffffff" stroke-width="6" rx="14"/>
+    <line x1="66.67" y1="8" x2="66.67" y2="192" stroke="#ffffff" stroke-width="4"/>
+    <line x1="133.33" y1="8" x2="133.33" y2="192" stroke="#ffffff" stroke-width="4"/>
+    <line x1="8" y1="66.67" x2="192" y2="66.67" stroke="#ffffff" stroke-width="4"/>
+    <line x1="8" y1="133.33" x2="192" y2="133.33" stroke="#ffffff" stroke-width="4"/>
+  </g>
+  <g font-family="ui-sans-serif, system-ui, -apple-system, sans-serif" font-weight="700" font-size="52" fill="#ffffff" text-anchor="middle" dominant-baseline="central">
+    <text x="189.33" y="189.33">5</text>
+    <text x="322.67" y="189.33" fill="#60a5fa">3</text>
+    <text x="256" y="256">8</text>
+    <text x="189.33" y="322.67" fill="#60a5fa">2</text>
+    <text x="322.67" y="322.67">9</text>
+  </g>
+</svg>

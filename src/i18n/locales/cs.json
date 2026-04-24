@@ -1,0 +1,61 @@
+{
+  "app": {
+    "title": "Sudoku",
+    "subtitle": "Klasické sudoku a další herní módy"
+  },
+  "menu": {
+    "newGame": "Nová hra",
+    "continue": "Pokračovat",
+    "settings": "Nastavení",
+    "stats": "Statistiky",
+    "chooseDifficulty": "Vyber obtížnost",
+    "gameInProgress": "Rozehraná {{difficulty}} hra — {{time}}"
+  },
+  "difficulty": {
+    "label": "Obtížnost",
+    "easy": "Lehká",
+    "medium": "Střední",
+    "hard": "Těžká",
+    "expert": "Expert"
+  },
+  "game": {
+    "undo": "Zpět",
+    "erase": "Smazat",
+    "notes": "Poznámky",
+    "hint": "Nápověda",
+    "pause": "Pauza",
+    "resume": "Pokračovat",
+    "time": "Čas",
+    "mistakes": "Chyby",
+    "mistakesLimit": "{{current}} / {{max}}",
+    "hintsUsed": "Nápovědy",
+    "paused": "Pozastaveno",
+    "completed": "Hotovo!",
+    "failed": "Příliš mnoho chyb",
+    "failedDescription": "Dosáhl jsi limitu {{max}} chyb.",
+    "yourTime": "Tvůj čas",
+    "newGame": "Nová hra",
+    "backToMenu": "Zpět do menu",
+    "generating": "Generuji zadání…",
+    "hintTimePenalty": "+30 s"
+  },
+  "settings": {
+    "title": "Nastavení",
+    "maxMistakes": "Limit chyb",
+    "maxMistakesUnlimited": "Bez limitu",
+    "maxMistakesValue": "{{count}} chyby",
+    "highlightSameDigits": "Zvýraznit stejné číslice",
+    "autoRemoveNotes": "Automaticky mazat poznámky",
+    "resetDefaults": "Obnovit výchozí",
+    "close": "Hotovo"
+  },
+  "language": {
+    "label": "Jazyk",
+    "cs": "Čeština",
+    "en": "Angličtina"
+  },
+  "install": {
+    "title": "Nainstalovat jako aplikaci",
+    "subtitle": "Offline, rychlé spuštění, bez prohlížeče"
+  }
+}
