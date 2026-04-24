@@ -15,7 +15,7 @@
   --color-cell-error: #dc2626;
   --color-cell-highlight: #dbeafe;
   --color-cell-selected: #bfdbfe;
-  --color-cell-peer: #f1f5f9;
+  --color-cell-peer: #e2e8f0;
 }
 
 .dark {
@@ -30,8 +30,8 @@
   --color-cell-user: #60a5fa;
   --color-cell-error: #f87171;
   --color-cell-highlight: #1e3a5f;
-  --color-cell-selected: #1e4a8f;
-  --color-cell-peer: #172132;
+  --color-cell-selected: #1d4ed8;
+  --color-cell-peer: #1e293b;
   color-scheme: dark;
 }
 

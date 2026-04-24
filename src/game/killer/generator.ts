@@ -106,7 +106,7 @@ export function generateKillerPuzzle(
   difficulty: Difficulty,
   rng: Rng = defaultRng,
 ): KillerPuzzle {
-  const MAX_ATTEMPTS = 5;
+  const MAX_ATTEMPTS = 12;
   let lastPuzzle: KillerPuzzle | null = null;
 
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {

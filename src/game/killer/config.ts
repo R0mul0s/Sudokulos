@@ -21,18 +21,18 @@ export interface KillerConfig {
 export const KILLER_CONFIG: Record<Difficulty, KillerConfig> = {
   easy: {
     minCageSize: 2,
-    maxCageSize: 2,
-    singleCellRatio: 0.15,
+    maxCageSize: 3,
+    singleCellRatio: 0.3,
   },
   medium: {
     minCageSize: 2,
-    maxCageSize: 3,
-    singleCellRatio: 0.05,
+    maxCageSize: 4,
+    singleCellRatio: 0.15,
   },
   hard: {
     minCageSize: 2,
-    maxCageSize: 4,
-    singleCellRatio: 0,
+    maxCageSize: 5,
+    singleCellRatio: 0.03,
   },
   expert: {
     minCageSize: 2,
