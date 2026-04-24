@@ -1,6 +1,6 @@
 /**
  * Úvodní obrazovka — nová hra (s volbou obtížnosti) + Continue pokud je
- * rozehraná hra v localStorage + tlačítko do nastavení.
+ * rozehraná hra v localStorage + odkazy do nastavení a statistik.
  *
  * @author Roman Hlaváček
  * @created 2026-04-24
@@ -16,9 +16,10 @@ import { formatElapsed } from './format';
 
 interface MenuScreenProps {
   onOpenSettings: () => void;
+  onOpenStats: () => void;
 }
 
-export function MenuScreen({ onOpenSettings }: MenuScreenProps) {
+export function MenuScreen({ onOpenSettings, onOpenStats }: MenuScreenProps) {
   const { t } = useTranslation();
   const board = useGameStore((s) => s.board);
   const difficulty = useGameStore((s) => s.difficulty);
@@ -41,10 +42,12 @@ export function MenuScreen({ onOpenSettings }: MenuScreenProps) {
     <div className="flex w-full flex-col gap-6">
       <header className="flex items-start justify-between">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">
+          <h1 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
             {t('app.title')}
           </h1>
-          <p className="text-sm text-slate-600">{t('app.subtitle')}</p>
+          <p className="text-sm text-slate-600 dark:text-slate-400">
+            {t('app.subtitle')}
+          </p>
         </div>
         <LanguageSwitcher />
       </header>
@@ -53,10 +56,10 @@ export function MenuScreen({ onOpenSettings }: MenuScreenProps) {
         <button
           type="button"
           onClick={continueGame}
-          className="flex flex-col items-start gap-1 rounded-2xl bg-slate-900 px-4 py-3 text-left text-white shadow-sm transition active:scale-[0.98]"
+          className="flex flex-col items-start gap-1 rounded-2xl bg-slate-900 px-4 py-3 text-left text-white shadow-sm transition active:scale-[0.98] dark:bg-slate-100 dark:text-slate-900"
         >
           <span className="text-base font-semibold">{t('menu.continue')}</span>
-          <span className="text-xs text-slate-300">
+          <span className="text-xs text-slate-300 dark:text-slate-600">
             {t('menu.gameInProgress', {
               difficulty: t(`difficulty.${difficulty}`),
               time: formatElapsed(elapsedMs),
@@ -66,7 +69,7 @@ export function MenuScreen({ onOpenSettings }: MenuScreenProps) {
       )}
 
       <div className="flex flex-col gap-3">
-        <h2 className="text-sm font-medium uppercase tracking-wide text-slate-600">
+        <h2 className="text-sm font-medium uppercase tracking-wide text-slate-600 dark:text-slate-400">
           {t('menu.chooseDifficulty')}
         </h2>
         <div className="flex flex-col gap-2">
@@ -81,6 +84,7 @@ export function MenuScreen({ onOpenSettings }: MenuScreenProps) {
                 className={[
                   'rounded-2xl border border-slate-300 bg-white px-4 py-3',
                   'text-slate-900 shadow-sm transition active:scale-[0.98] disabled:opacity-60',
+                  'dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100',
                 ].join(' ')}
               >
                 {isBusy ? t('game.generating') : t(`difficulty.${d}`)}
@@ -92,13 +96,22 @@ export function MenuScreen({ onOpenSettings }: MenuScreenProps) {
 
       <InstallBanner />
 
-      <button
-        type="button"
-        onClick={onOpenSettings}
-        className="self-start text-sm text-slate-600 underline-offset-4 hover:underline"
-      >
-        ⚙ {t('menu.settings')}
-      </button>
+      <div className="flex gap-4 text-sm text-slate-600 dark:text-slate-400">
+        <button
+          type="button"
+          onClick={onOpenStats}
+          className="underline-offset-4 hover:underline"
+        >
+          📊 {t('menu.stats')}
+        </button>
+        <button
+          type="button"
+          onClick={onOpenSettings}
+          className="underline-offset-4 hover:underline"
+        >
+          ⚙ {t('menu.settings')}
+        </button>
+      </div>
     </div>
   );
 }

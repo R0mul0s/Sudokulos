@@ -18,6 +18,8 @@ describe('settingsStore', () => {
     expect(state.maxMistakes).toBe(3);
     expect(state.highlightSameDigits).toBe(true);
     expect(state.autoRemoveNotes).toBe(true);
+    expect(state.theme).toBe('system');
+    expect(state.hapticsEnabled).toBe(true);
   });
 
   it('setMaxMistakes aktualizuje hodnotu', () => {
@@ -39,11 +41,27 @@ describe('settingsStore', () => {
     store.setMaxMistakes(0);
     store.setHighlightSameDigits(false);
     store.setAutoRemoveNotes(false);
+    store.setTheme('dark');
+    store.setHapticsEnabled(false);
     store.resetDefaults();
     const state = useSettingsStore.getState();
     expect(state.maxMistakes).toBe(3);
     expect(state.highlightSameDigits).toBe(true);
     expect(state.autoRemoveNotes).toBe(true);
+    expect(state.theme).toBe('system');
+    expect(state.hapticsEnabled).toBe(true);
+  });
+
+  it('setTheme změní motiv', () => {
+    useSettingsStore.getState().setTheme('dark');
+    expect(useSettingsStore.getState().theme).toBe('dark');
+    useSettingsStore.getState().setTheme('light');
+    expect(useSettingsStore.getState().theme).toBe('light');
+  });
+
+  it('setHapticsEnabled přepne vibrace', () => {
+    useSettingsStore.getState().setHapticsEnabled(false);
+    expect(useSettingsStore.getState().hapticsEnabled).toBe(false);
   });
 
   it('persistuje do localStorage', () => {

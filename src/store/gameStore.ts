@@ -23,8 +23,10 @@ import {
 } from '@/game/board';
 import { boardToGrid } from '@/game/board';
 import { generatePuzzle } from '@/game/generator';
+import { triggerHaptic } from '@/game/haptics';
 import { findConflicts } from '@/game/validator';
 import { useSettingsStore } from './settingsStore';
+import { useStatsStore, type GameOutcome } from './statsStore';
 
 export type GameStatus =
   | 'menu'
@@ -110,6 +112,22 @@ function getPeers(row: number, col: number): Position[] {
     }
   }
   return peers;
+}
+
+/**
+ * Zaznamená dokončenou/prohranou hru do statistik. Čte data přímo z aktuálního
+ * stavu store'u po transici, takže musí být volána až po set() nové state.
+ */
+function recordOutcome(state: GameStoreState, outcome: GameOutcome): void {
+  useStatsStore.getState().recordGame({
+    finishedAt: new Date().toISOString(),
+    difficulty: state.difficulty,
+    mode: state.mode,
+    outcome,
+    timeMs: state.elapsedMs,
+    mistakes: state.mistakes,
+    hintsUsed: state.hintsUsed,
+  });
 }
 
 /** Najde první prázdnou buňku na desce — pro hint. Vrací null pokud žádná není. */
@@ -299,6 +317,16 @@ export const useGameStore = create<GameStore>()(
           mistakes: nextMistakes,
           status: nextStatus,
         });
+
+        if (nextStatus === 'completed') {
+          triggerHaptic('success');
+          recordOutcome(get(), 'completed');
+        } else if (nextStatus === 'failed') {
+          triggerHaptic('fail');
+          recordOutcome(get(), 'failed');
+        } else if (isMistake) {
+          triggerHaptic('error');
+        }
       },
 
       toggleNote: (value) => {
@@ -420,6 +448,11 @@ export const useGameStore = create<GameStore>()(
           status: completed ? 'completed' : 'playing',
           selected: { row, col },
         });
+
+        if (completed) {
+          triggerHaptic('success');
+          recordOutcome(get(), 'completed');
+        }
       },
 
       pause: () => {

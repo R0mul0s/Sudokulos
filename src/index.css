@@ -1,13 +1,38 @@
 @import 'tailwindcss';
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-board-bg: #f8fafc;
-  --color-board-border: #0f172a;
+  --color-surface: #ffffff;
+  --color-surface-2: #f1f5f9;
+  --color-surface-3: #e2e8f0;
+  --color-border: #cbd5e1;
+  --color-text: #0f172a;
+  --color-text-muted: #475569;
   --color-cell-given: #0f172a;
   --color-cell-user: #2563eb;
   --color-cell-error: #dc2626;
   --color-cell-highlight: #dbeafe;
   --color-cell-selected: #bfdbfe;
+  --color-cell-peer: #f1f5f9;
+}
+
+.dark {
+  --color-board-bg: #020617;
+  --color-surface: #0f172a;
+  --color-surface-2: #1e293b;
+  --color-surface-3: #334155;
+  --color-border: #334155;
+  --color-text: #e2e8f0;
+  --color-text-muted: #94a3b8;
+  --color-cell-given: #e2e8f0;
+  --color-cell-user: #60a5fa;
+  --color-cell-error: #f87171;
+  --color-cell-highlight: #1e3a5f;
+  --color-cell-selected: #1e4a8f;
+  --color-cell-peer: #172132;
+  color-scheme: dark;
 }
 
 html,
@@ -42,6 +67,7 @@ body {
     Roboto,
     sans-serif;
   background: var(--color-board-bg);
+  color: var(--color-text);
   -webkit-tap-highlight-color: transparent;
   user-select: none;
   overscroll-behavior: none;
@@ -56,4 +82,35 @@ body {
   padding-right: max(1.5rem, env(safe-area-inset-right));
   padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
   padding-left: max(1.5rem, env(safe-area-inset-left));
+}
+
+/*
+ * Animace dokončení hry — jemné zpoždění + zvětšení overlaye.
+ */
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-overlay-in {
+  animation: fadeInScale 220ms ease-out both;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 180ms ease-out both;
 }

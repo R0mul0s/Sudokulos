@@ -41,13 +41,37 @@
   },
   "settings": {
     "title": "Settings",
+    "themeLabel": "Theme",
+    "theme": {
+      "system": "System",
+      "light": "Light",
+      "dark": "Dark"
+    },
     "maxMistakes": "Mistake limit",
     "maxMistakesUnlimited": "Unlimited",
     "maxMistakesValue": "{{count}} mistakes",
     "highlightSameDigits": "Highlight same digits",
     "autoRemoveNotes": "Auto-remove notes",
+    "haptics": "Haptic feedback",
     "resetDefaults": "Reset defaults",
     "close": "Done"
+  },
+  "stats": {
+    "title": "Statistics",
+    "close": "Close",
+    "played": "Played",
+    "playedValue": "{{count}} games",
+    "completed": "Completed",
+    "bestTime": "Best",
+    "averageTime": "Average",
+    "successRate": "Success rate",
+    "completedOutOfPlayed": "{{completed}} of {{played}}",
+    "streak": "Streak",
+    "dayOne": "1 day in a row",
+    "dayMany": "days in a row",
+    "byDifficulty": "By difficulty",
+    "clear": "Clear history",
+    "confirmClear": "Really clear all statistics?"
   },
   "language": {
     "label": "Language",

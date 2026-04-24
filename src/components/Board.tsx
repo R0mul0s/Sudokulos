@@ -49,7 +49,7 @@ export function Board() {
 
   return (
     <div
-      className="grid aspect-square w-full max-w-[min(100vw-2rem,32rem)] grid-cols-9 grid-rows-9 rounded-md bg-white shadow-sm"
+      className="grid aspect-square w-full max-w-[min(100vw-2rem,32rem)] grid-cols-9 grid-rows-9 rounded-md bg-surface shadow-sm dark:shadow-none"
       role="grid"
       aria-label="Sudoku deska"
     >

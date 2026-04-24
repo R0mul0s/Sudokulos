@@ -41,13 +41,37 @@
   },
   "settings": {
     "title": "Nastavení",
+    "themeLabel": "Motiv",
+    "theme": {
+      "system": "Systém",
+      "light": "Světlý",
+      "dark": "Tmavý"
+    },
     "maxMistakes": "Limit chyb",
     "maxMistakesUnlimited": "Bez limitu",
     "maxMistakesValue": "{{count}} chyby",
     "highlightSameDigits": "Zvýraznit stejné číslice",
     "autoRemoveNotes": "Automaticky mazat poznámky",
+    "haptics": "Haptická odezva",
     "resetDefaults": "Obnovit výchozí",
     "close": "Hotovo"
+  },
+  "stats": {
+    "title": "Statistiky",
+    "close": "Zavřít",
+    "played": "Odehráno",
+    "playedValue": "{{count}} her",
+    "completed": "Dokončeno",
+    "bestTime": "Nejlepší",
+    "averageTime": "Průměr",
+    "successRate": "Úspěšnost",
+    "completedOutOfPlayed": "{{completed}} z {{played}}",
+    "streak": "Série",
+    "dayOne": "1 den po sobě",
+    "dayMany": "dnů po sobě",
+    "byDifficulty": "Podle obtížnosti",
+    "clear": "Vymazat historii",
+    "confirmClear": "Opravdu smazat všechny statistiky?"
   },
   "language": {
     "label": "Jazyk",

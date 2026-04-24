@@ -21,10 +21,10 @@ export function Timer() {
       : String(mistakes);
 
   return (
-    <div className="flex items-center justify-between text-sm text-slate-600">
+    <div className="flex items-center justify-between text-sm text-slate-600 dark:text-slate-400">
       <div>
         <div className="text-xs uppercase tracking-wide">{t('game.time')}</div>
-        <div className="font-mono text-lg text-slate-900 tabular-nums">
+        <div className="font-mono text-lg text-slate-900 tabular-nums dark:text-slate-100">
           {formatElapsed(elapsedMs)}
         </div>
       </div>
@@ -35,7 +35,9 @@ export function Timer() {
         <div
           className={[
             'font-mono text-lg tabular-nums',
-            mistakes > 0 ? 'text-red-600' : 'text-slate-900',
+            mistakes > 0
+              ? 'text-red-600 dark:text-red-400'
+              : 'text-slate-900 dark:text-slate-100',
           ].join(' ')}
         >
           {mistakesText}

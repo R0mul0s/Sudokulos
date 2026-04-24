@@ -52,10 +52,10 @@ export function NumberPad() {
               'text-xl font-semibold shadow-sm transition',
               'active:scale-95',
               isUsedUp
-                ? 'bg-slate-100 text-slate-400'
+                ? 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-600'
                 : noteMode
-                  ? 'bg-slate-200 text-slate-900 hover:bg-slate-300'
-                  : 'bg-white text-slate-900 hover:bg-slate-50',
+                  ? 'bg-slate-200 text-slate-900 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600'
+                  : 'bg-white text-slate-900 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700',
             ].join(' ')}
             aria-label={`Vložit ${d}`}
           >

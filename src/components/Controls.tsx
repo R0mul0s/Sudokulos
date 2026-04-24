@@ -34,8 +34,8 @@ function ControlButton({
         'px-2 py-2 text-xs font-medium shadow-sm transition',
         'active:scale-95 disabled:opacity-40',
         active
-          ? 'bg-slate-900 text-white'
-          : 'bg-white text-slate-700 hover:bg-slate-50',
+          ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'
+          : 'bg-white text-slate-700 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700',
       ].join(' ')}
       aria-label={label}
       aria-pressed={active}
@@ -46,7 +46,9 @@ function ControlButton({
           <span
             className={[
               'absolute -right-3 -top-1 rounded-full px-1 text-[10px]',
-              active ? 'bg-white text-slate-900' : 'bg-slate-900 text-white',
+              active
+                ? 'bg-white text-slate-900 dark:bg-slate-900 dark:text-white'
+                : 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900',
             ].join(' ')}
           >
             {badge}

@@ -10,6 +10,7 @@ import { boardFromPuzzle } from '@/game/board';
 import { parseGrid } from '@/game/grid';
 import { useGameStore } from './gameStore';
 import { useSettingsStore } from './settingsStore';
+import { useStatsStore } from './statsStore';
 
 const SOLUTION =
   '534678912672195348198342567859761423426853791713924856961537284287419635345286179';
@@ -45,6 +46,7 @@ describe('gameStore', () => {
     localStorage.clear();
     useGameStore.getState().abandonGame();
     useSettingsStore.getState().resetDefaults();
+    useStatsStore.getState().clearAll();
   });
 
   describe('abandonGame', () => {
@@ -296,6 +298,48 @@ describe('gameStore', () => {
       useGameStore.getState().selectCell(0, 0);
       useGameStore.getState().setDigit(5);
       expect(useGameStore.getState().status).toBe('completed');
+    });
+
+    it('dokončení zapíše záznam do statsStore', () => {
+      const solution = parseGrid(SOLUTION);
+      const board = boardFromPuzzle(solution);
+      board[0][0] = { value: 0, given: false, notes: new Set() };
+      useGameStore.setState({
+        status: 'playing',
+        difficulty: 'medium',
+        mode: 'classic',
+        board,
+        solution,
+        selected: null,
+        noteMode: false,
+        elapsedMs: 42_000,
+        mistakes: 1,
+        hintsUsed: 2,
+        history: [],
+      });
+      useGameStore.getState().selectCell(0, 0);
+      useGameStore.getState().setDigit(5);
+      const history = useStatsStore.getState().history;
+      expect(history).toHaveLength(1);
+      expect(history[0].outcome).toBe('completed');
+      expect(history[0].difficulty).toBe('medium');
+      expect(history[0].timeMs).toBe(42_000);
+      expect(history[0].hintsUsed).toBe(2);
+    });
+
+    it('failed stav taky zapíše záznam do statsStore', () => {
+      seedPlayingState();
+      useSettingsStore.getState().setMaxMistakes(3);
+      const store = useGameStore.getState();
+      store.selectCell(0, 2);
+      store.setDigit(5);
+      store.selectCell(0, 3);
+      store.setDigit(5);
+      store.selectCell(0, 5);
+      store.setDigit(5);
+      const history = useStatsStore.getState().history;
+      expect(history).toHaveLength(1);
+      expect(history[0].outcome).toBe('failed');
     });
   });
 

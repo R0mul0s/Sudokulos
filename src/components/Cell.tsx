@@ -29,8 +29,8 @@ function cellBackground(
 ): string {
   if (isSelected) return 'bg-cell-selected';
   if (isSameValue) return 'bg-cell-highlight';
-  if (isPeer) return 'bg-slate-100';
-  return 'bg-white';
+  if (isPeer) return 'bg-cell-peer';
+  return 'bg-surface';
 }
 
 function cellTextColor(
@@ -45,11 +45,15 @@ function cellTextColor(
 }
 
 function borderClasses(row: number, col: number): string {
-  const classes: string[] = ['border-slate-300'];
-  if (row % BLOCK_SIZE === 0) classes.push('border-t-2 border-t-slate-900');
-  if (col % BLOCK_SIZE === 0) classes.push('border-l-2 border-l-slate-900');
-  if (row === BOARD_SIZE - 1) classes.push('border-b-2 border-b-slate-900');
-  if (col === BOARD_SIZE - 1) classes.push('border-r-2 border-r-slate-900');
+  const classes: string[] = ['border-border'];
+  if (row % BLOCK_SIZE === 0)
+    classes.push('border-t-2 border-t-slate-900 dark:border-t-slate-100');
+  if (col % BLOCK_SIZE === 0)
+    classes.push('border-l-2 border-l-slate-900 dark:border-l-slate-100');
+  if (row === BOARD_SIZE - 1)
+    classes.push('border-b-2 border-b-slate-900 dark:border-b-slate-100');
+  if (col === BOARD_SIZE - 1)
+    classes.push('border-r-2 border-r-slate-900 dark:border-r-slate-100');
   return classes.join(' ');
 }
 
@@ -83,7 +87,7 @@ export const Cell = memo(function Cell({
       {hasValue ? (
         cell.value
       ) : cell.notes.size > 0 ? (
-        <div className="grid h-full w-full grid-cols-3 grid-rows-3 p-0.5 text-[9px] leading-none text-slate-500 sm:text-[11px]">
+        <div className="grid h-full w-full grid-cols-3 grid-rows-3 p-0.5 text-[9px] leading-none text-text-muted sm:text-[11px]">
           {NOTE_GRID.map((n) => (
             <span
               key={n}

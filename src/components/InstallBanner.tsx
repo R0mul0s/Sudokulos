@@ -18,13 +18,15 @@ export function InstallBanner() {
     <button
       type="button"
       onClick={install}
-      className="flex items-center justify-between gap-3 rounded-2xl border border-slate-300 bg-white px-4 py-3 text-left shadow-sm transition active:scale-[0.98]"
+      className="flex items-center justify-between gap-3 rounded-2xl border border-slate-300 bg-white px-4 py-3 text-left shadow-sm transition active:scale-[0.98] dark:border-slate-600 dark:bg-slate-800"
     >
       <div>
-        <div className="text-sm font-semibold text-slate-900">
+        <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
           {t('install.title')}
         </div>
-        <div className="text-xs text-slate-600">{t('install.subtitle')}</div>
+        <div className="text-xs text-slate-600 dark:text-slate-400">
+          {t('install.subtitle')}
+        </div>
       </div>
       <span className="text-lg">⬇</span>
     </button>

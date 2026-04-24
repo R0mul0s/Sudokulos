@@ -96,25 +96,26 @@ Kódová část hotová, deploy je na uživateli.
 - ✅ Offline: `vite-plugin-pwa` generuje SW s `generateSW` strategií, precache 21 entries (324 KB)
 - ✅ README + [docs/DEPLOY.md](DEPLOY.md) s postupem pro GitHub + Vercel
 
-**Zbývá (manuální akce):**
-- ⏳ `git init` + GitHub repo + push
-- ⏳ Vercel projekt napojený na repo
-- ⏳ Ověření produkčního deploye (Lighthouse PWA audit, install na telefonu)
-
-**DoD dokončíme až po prvním deployi** — kódově je vše připravené.
+**Hotovo:**
+- ✅ Repo `R0mul0s/Sudokulos` na GitHubu
+- ✅ Nasazeno na Vercelu, safe-area insets fungují na telefonu
 
 ---
 
-## Fáze 5 — Statistiky a polish ⏳
+## Fáze 5 — Statistiky a polish ✅
 
-- [ ] `store/statsStore.ts` — historie dohraných her, nejrychlejší časy, streak
-- [ ] Obrazovka statistik (počet her, úspěšnost, průměrný čas, rekord)
-- [ ] Tmavý režim (respekt `prefers-color-scheme` + manuální přepínač)
-- [ ] Haptická odezva na mobilech (Vibration API při chybě, dokončení)
-- [ ] Zvuky (volitelné)
-- [ ] Animace při dokončení
+- ✅ `store/statsStore.ts` — historie her (persist, max 500), agregáty (per-obtížnost: played/completed/bestTime/averageTime, overall success rate, streak)
+- ✅ `StatsScreen` — overall metriky, per-obtížnost, streak s lokálním datem, clear historie
+- ✅ Tmavý režim: CSS tokens s přepínáním přes `.dark` class, `useThemeSync` hook se sledováním `prefers-color-scheme`, settings picker system/light/dark
+- ✅ Všechny komponenty mají `dark:` varianty (Board, Cell, NumberPad, Controls, Timer, MenuScreen, SettingsScreen, StatsScreen, GameScreen, LanguageSwitcher, InstallBanner)
+- ✅ Haptická odezva: `game/haptics.ts` přes Vibration API, 4 patterny (tap/error/success/fail), respektuje `hapticsEnabled` setting
+- ✅ Animace: `animate-fade-in` pro pauza overlay, `animate-overlay-in` (scale+fade) pro completed/failed dialog
+- ✅ gameStore zaznamenává každou dohranou hru do stats (completed/failed)
+- ✅ 110 testů, build 90.5 kB gzipped
 
-**DoD:** app působí dotaženě, je radost ji používat.
+**Vědomě odloženo:** zvuky (Web Audio / assety) — nechány na později, bez zvuků app působí čistě.
+
+**DoD splněno:** app má statistiky, respektuje systémový motiv i ruční přepínač, vibruje při chybách a dokončení, overlay se objevuje s animací.
 
 ---
 

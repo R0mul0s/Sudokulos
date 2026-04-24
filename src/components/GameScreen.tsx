@@ -40,11 +40,11 @@ export function GameScreen() {
         <button
           type="button"
           onClick={returnToMenu}
-          className="text-sm text-slate-600 underline-offset-4 hover:underline"
+          className="text-sm text-slate-600 underline-offset-4 hover:underline dark:text-slate-400"
         >
           ← {t('game.backToMenu')}
         </button>
-        <span className="rounded-full bg-slate-200 px-3 py-1 text-xs font-medium text-slate-700">
+        <span className="rounded-full bg-slate-200 px-3 py-1 text-xs font-medium text-slate-700 dark:bg-slate-700 dark:text-slate-200">
           {t(`difficulty.${difficulty}`)}
         </span>
       </header>
@@ -54,11 +54,11 @@ export function GameScreen() {
       <div className="relative">
         <Board />
         {status === 'paused' && (
-          <div className="absolute inset-0 flex items-center justify-center rounded-md bg-white/90 backdrop-blur-sm">
+          <div className="absolute inset-0 flex items-center justify-center rounded-md bg-white/90 backdrop-blur-sm animate-fade-in dark:bg-slate-900/90">
             <button
               type="button"
               onClick={resume}
-              className="rounded-2xl bg-slate-900 px-6 py-3 text-white shadow-sm"
+              className="rounded-2xl bg-slate-900 px-6 py-3 text-white shadow-sm dark:bg-slate-100 dark:text-slate-900"
             >
               ▶ {t('game.resume')}
             </button>
@@ -71,45 +71,49 @@ export function GameScreen() {
 
       {showOverlay && (
         <div
-          className="fixed inset-0 z-10 flex items-center justify-center bg-slate-900/60 modal-safe-area"
+          className="fixed inset-0 z-10 flex items-center justify-center bg-slate-900/60 modal-safe-area animate-fade-in"
           role="dialog"
           aria-modal="true"
         >
-          <div className="flex w-full max-w-sm flex-col gap-4 rounded-3xl bg-white p-6 text-center shadow-xl">
+          <div className="flex w-full max-w-sm flex-col gap-4 rounded-3xl bg-white p-6 text-center shadow-xl animate-overlay-in dark:bg-slate-800">
             <h2
               className={[
                 'text-2xl font-semibold',
-                showFailed ? 'text-red-600' : 'text-slate-900',
+                showFailed
+                  ? 'text-red-600 dark:text-red-400'
+                  : 'text-slate-900 dark:text-slate-100',
               ].join(' ')}
             >
               {showCompleted ? t('game.completed') : t('game.failed')}
             </h2>
             {showFailed && maxMistakes > 0 && (
-              <p className="text-sm text-slate-600">
+              <p className="text-sm text-slate-600 dark:text-slate-400">
                 {t('game.failedDescription', { max: maxMistakes })}
               </p>
             )}
             <dl className="flex justify-around text-sm">
               <div>
-                <dt className="text-xs uppercase tracking-wide text-slate-500">
+                <dt className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
                   {t('game.yourTime')}
                 </dt>
-                <dd className="font-mono text-xl text-slate-900">
+                <dd className="font-mono text-xl text-slate-900 dark:text-slate-100">
                   {formatElapsed(elapsedMs)}
                 </dd>
               </div>
               <div>
-                <dt className="text-xs uppercase tracking-wide text-slate-500">
+                <dt className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
                   {t('game.mistakes')}
                 </dt>
-                <dd className="font-mono text-xl text-slate-900">{mistakes}</dd>
+                <dd className="font-mono text-xl text-slate-900 dark:text-slate-100">
+                  {mistakes}
+                </dd>
               </div>
               {hintsUsed > 0 && (
                 <div>
-                  <dt className="text-xs uppercase tracking-wide text-slate-500">
+                  <dt className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
                     {t('game.hintsUsed')}
                   </dt>
-                  <dd className="font-mono text-xl text-slate-900">
+                  <dd className="font-mono text-xl text-slate-900 dark:text-slate-100">
                     {hintsUsed}
                   </dd>
                 </div>
@@ -119,14 +123,14 @@ export function GameScreen() {
               <button
                 type="button"
                 onClick={returnToMenu}
-                className="flex-1 rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900"
+                className="flex-1 rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100"
               >
                 {t('game.backToMenu')}
               </button>
               <button
                 type="button"
                 onClick={() => startNewGame(difficulty)}
-                className="flex-1 rounded-2xl bg-slate-900 px-4 py-3 text-white"
+                className="flex-1 rounded-2xl bg-slate-900 px-4 py-3 text-white dark:bg-slate-100 dark:text-slate-900"
               >
                 {t('game.newGame')}
               </button>
