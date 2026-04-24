@@ -170,6 +170,183 @@ Nápady, které se vyhodnotí až po dokončení 0–6.
 
 ---
 
+## Fáze 8 — RPG Roguelike mód ⏳
+
+Nový herní mód nad existujícím sudoku enginem. Hráč prochází **run** = sekvenci 5–7 puzzle úrovní rostoucí obtížnosti, sbírá relics a zlato, bojuje proti bossovi, umírá (permadeath) a nese si jen **souls** jako meta progression.
+
+### 8.1 Game loop — 4 zoomy
+
+**Tah** (1 s) — vyplnění buňky → combo zvýší, chain reaction může spustit bonus  
+**Level** (3–8 min) — vyřešit puzzle bez ztráty všech HP, max. vytěžit mechaniky  
+**Run** (20–40 min) — 7 uzlů (battle → elite → shop → boss), vybudovat synergii relics  
+**Meta** (týdny) — souls, odemykání tříd / relics / startovních bonusů
+
+### 8.2 Struktura runu
+
+Lineární mapa s lehkým větvením, **7 uzlů**:
+
+```
+[1 battle] → [2 battle] → [3 mystery?] → [4 battle] → [5 elite] → [6 shop] → [7 BOSS]
+```
+
+Typy uzlů:
+- **⚔️ Battle** — klasický puzzle, obtížnost škáluje s pozicí
+- **❓ Mystery** — náhodná událost (Oltář: −HP za relic / Rest: +HP / Chest: zlato nebo scroll)
+- **💀 Elite** — tvrdší puzzle (corrupted givens nebo hard killer), lepší drop
+- **🏪 Shop** — utrát zlato za relics, potions, power-up scrolls
+- **👑 Boss** — puzzle variant (killer s časovým limitem nebo diagonal sudoku) + environmental effect
+
+### 8.3 Datový model
+
+Nové typy (`src/types/rpg.ts`):
+- `Run` — id, seed, třída, mapa uzlů, current node index, hráčův stav
+- `RunNode` — typ (battle/elite/mystery/shop/boss), difficulty, dokončeno?
+- `PlayerState` — maxHp, hp, maxMana, mana, gold, relics[], powerUpSlot, xp
+- `Relic` — id, name, rarity (common/uncommon/rare), effect (passive descriptor)
+- `PowerUp` — id, name, effect (peek/shield/swap), charges
+- `RunResult` — won, levelsCompleted, finalHp, relics, souls
+- `PlayerProfile` (meta) — totalRuns, wins, souls, unlockedClasses, unlockedRelics, bestRun
+
+Nové stores:
+- `runStore` (Zustand, persist) — aktuální run state, aktuální puzzle se stavem, combo counter, lucky cells
+- `profileStore` (Zustand, persist) — meta profile (souls, odemknutí)
+
+### 8.4 Core mechaniky
+
+#### HP systém
+- Startovní maxHp dle třídy (3 default)
+- Chyba v puzzle = −1 HP (nebo víc, pokud trigger). HP=0 → end of run.
+- Různé zdroje HP: Rest nody (+2 HP), Potions (+1 HP okamžitě), některé relics
+
+#### Combo streak
+- Každé správné vyplnění zvýší `combo` (×1, ×2, ×3, ...)
+- `combo ≥ 2` dává bonus na každý další tah: `+combo × 5 gold`, `+combo mana`
+- Chyba combo resetuje na 0
+- Visualizace: číslo "×3" u HUD, animace při novém milníku (×5, ×10, ×20)
+
+#### Chain reaction
+- Vyplnění poslední prázdné buňky v řádku / sloupci / bloku spustí "chain"
+- Jeden chain: +10 many nebo +50 zlata (flavor podle třídy)
+- Dvojitý chain (2 skupiny dokončené jedním tahem): super-bonus (+25 many)
+- Trojitý chain: ultra-bonus (drop powerupu zdarma)
+- Vizuální: flash přes dokončenou skupinu, particle efekt
+
+#### Lucky cells
+- Na startu levelu se 2–3 buňky označí hvězdičkou ⭐
+- Správně vyplněná lucky buňka → drop (potion / gold / mana)
+- Špatně vyplněná = dvojitá HP penalty (−2 místo −1)
+
+#### Power-up slot
+- 1 slot = 1 power-up použitelný v aktuálním levelu
+- Scrolls z dropů se dávají do slotu (pokud je prázdný) nebo nahrazují aktuální
+- Power-ups:
+  - **Peek** — 3 sekundy zobrazí správnou hodnotu selected buňky
+  - **Shield** — příští chyba se nepočítá jako mistake
+  - **Swap** — prohodit hodnoty 2 libovolných buněk (zachraňuje chybu)
+
+#### Environmental effects (bossové a elites)
+- **Bouře**: každých 60 s se smaže náhodná poznámka
+- **Mráz**: 2 náhodné buňky zamrzne na 20 s (nelze upravit)
+- **Temnota**: viditelný jen aktuální 3×3 blok, zbytek ztmavený
+- **Světlo**: +30 s bonusový čas, ale −1 max HP
+
+### 8.5 Relics
+
+Passivní bonusy aktivní po celý run. Sbírají se z dropů, elit, bossů, obchodů.
+
+**Starter pool (~15 kusů):**
+
+| Rarity | Název | Efekt |
+|---|---|---|
+| Common | Amulet vhledu | auto-notes po každém vyplnění |
+| Common | Měděný prsten | +10 zlata za dokončený level |
+| Common | Kožená rukavice | +1 maxHp |
+| Common | Stříbrný řetěz | +5 maxMana |
+| Common | Lahvička many | 1× za level obnoví 5 many |
+| Uncommon | Dračí šupina | první chyba v levelu je odpuštěná |
+| Uncommon | Plamenná koruna | +25 % gold bonus pod 3 minuty |
+| Uncommon | Kniha zaklínání | power-up slot má 2 nabití |
+| Uncommon | Oko ostrého zraku | peer highlight se rozšíří o diagonály |
+| Rare | Fénix | jednou za run oživne hráče na 1 HP |
+| Rare | Kamenný totem | chain reaction dává dvojnásobný bonus |
+| Rare | Stín | lucky cells jsou 5 místo 3 |
+| Rare | Oltář krve | obětuj −1 HP za +50 zlata (aktivní tlačítko) |
+| Rare | Zrcadlo | každá hvězdička zní na 2 buňkách |
+| Rare | Hodinky zpětného času | jednou za run undo posledních 5 tahů |
+
+### 8.6 Meta progression
+
+Při ukončení runu (úspěch i smrt) hráč získá **souls** podle výkonu:
+- Úroveň progresie × 10 — např. smrt na 3. uzlu = 30 souls
+- Bonus za bosse: +80 souls
+- Vítězství runu: +150 souls + 3★ runs získává unikátní relic do meta pool
+
+Souls v profilu jdou utratit:
+- **Nová třída** (100–300 souls) — Mnich, Mág, Válečník, Rogue
+- **Nový relic do dropovací pool** (50–150 souls dle rarity)
+- **Startovní bonus** (200 souls) — např. +1 maxHp, extra potion, první relic zdarma
+- **Nová boss varianta** (300 souls) — odemkne speciální boss na další runy
+
+### 8.7 Rozpad na iterace
+
+Postavíme ve 3 fázích, každou oddělitelně testovatelnou.
+
+#### Fáze 8.1 — MVP (prototyp) 🎯
+
+Nejdůležitější — ověřit, jestli je loop zábavný.
+
+- [ ] `types/rpg.ts` — PlayerState, Run, RunNode (jen battle typ)
+- [ ] `store/runStore.ts` — start/end run, progress mezi uzly, záznam puzzle výsledku
+- [ ] `store/profileStore.ts` — souls, základní statistiky (bez odemykání)
+- [ ] Rozšířit `gameStore` o run context — hp, combo, chain tracking
+  - HP decrement při chybě
+  - Combo counter v state
+  - Chain detection na každý setDigit
+- [ ] Nové obrazovky:
+  - `RunMapScreen` — vizualizace 7 uzlů, aktuální pozice, přechod na puzzle
+  - `RunHud` — overlay v GameScreen s HP, mana, combo, relics ikony
+  - `RewardScreen` — 3-volba dropu po dokončení levelu
+  - `RunEndScreen` — summary + souls
+- [ ] **5 core relics** (easy do implementace): Amulet vhledu, Měděný prsten, Kožená rukavice, Dračí šupina, Fénix
+- [ ] 1 třída (default: Válečník — maxHp 3, maxMana 10)
+- [ ] Pouze battle uzly (bez elite/shop/mystery)
+- [ ] Jeden boss na konci — killer puzzle s 10 min limitem
+- [ ] i18n (cs/en) pro RPG terminologii
+- [ ] Tlačítko v MenuScreen "🎮 RPG Run"
+
+**DoD:** lze odehrát kompletní 5-level run od začátku do smrti/vítězství, souls se ukládají, relics aplikují efekty.
+
+#### Fáze 8.2 — Rozšíření 🔧
+
+- [ ] Zbývajících ~10 relics (zejména z uncommon a rare)
+- [ ] Elite a mystery uzly
+- [ ] Shop s nákupem (potions, scrolls, relics)
+- [ ] Power-up systém (Peek / Shield / Swap)
+- [ ] Lucky cells mechanika
+- [ ] 2–3 další třídy (Mnich, Mág, Rogue)
+- [ ] Odemykání v profilu (spending souls)
+- [ ] Statistiky RPG módu separátně v StatsScreen
+
+#### Fáze 8.3 — Polish 🎨
+
+- [ ] Environmental effects (Bouře, Mráz, Temnota, Světlo) na elite/boss
+- [ ] Animace na chain reaction, combo milestones, lucky cell hit
+- [ ] Boss variants (diagonal sudoku, speciální killer)
+- [ ] Zvuková odezva (pokud přidáme audio assety)
+- [ ] Tutorial / onboarding první run
+- [ ] Vyladění obtížnostní křivky podle telemetrie (kolik % runs končí na který uzel)
+
+### 8.8 Závislosti a rizika
+
+- **Balans**: roguelike módy vyžadují iterativní balancování. Po MVP udělat alespoň 5 kompletních runs ručně a dolaďovat čísla.
+- **Persistence**: runStore v localStorage drží aktivní run — pokud se zjevní inkonzistence mezi verzemi kódu a uloženým runem, musíme mít reset logiku.
+- **UI space**: RunHud přidává elementy nad už plný GameScreen. Na mobilu musíme řešit výšku (případně skrývací panel s detaily).
+- **i18n**: RPG flavor text (relics descriptions, event popupy) je hodně textu. Můžeme začít jen s cz, en přidat později.
+
+**DoD Fáze 8 celkem:** hráč může opakovaně spouštět runy s odlišnou hratelností díky relics, obtížnost se škáluje, souls-based progression motivuje k dalším runům. Kompletní mód s minimálně 3 třídami, 15 relics, 7 uzlů na run.
+
+---
+
 ## Technický dluh — průběžně
 
 - [ ] Až se najde lepší alternativa, vyřešit transitivní vulnerability ve `vite-plugin-pwa`
