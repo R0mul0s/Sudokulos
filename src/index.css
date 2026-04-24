@@ -11,11 +11,27 @@
 }
 
 html,
-body,
-#root {
+body {
   height: 100%;
   margin: 0;
   padding: 0;
+}
+
+/*
+ * #root respektuje safe-area insets zařízení (notch, status bar, home indicator,
+ * vykrojená rozhraní) pomocí env(safe-area-inset-*). Kombinace s viewport-fit=cover
+ * a box-sizing:border-box zajistí, že obsah aplikace začíná pod systémovým barem
+ * a končí nad home indicatorem, i když pozadí jde až pod ně.
+ */
+#root {
+  height: 100%;
+  min-height: 100dvh;
+  margin: 0;
+  padding-top: env(safe-area-inset-top);
+  padding-right: env(safe-area-inset-right);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  box-sizing: border-box;
 }
 
 body {
@@ -29,4 +45,15 @@ body {
   -webkit-tap-highlight-color: transparent;
   user-select: none;
   overscroll-behavior: none;
+}
+
+/*
+ * Modaly s fixed inset-0 (completed/failed overlay) potřebují vlastní safe-area
+ * padding, protože jsou pozicované vůči viewportu a nejsou uvnitř #root layout flow.
+ */
+.modal-safe-area {
+  padding-top: max(1.5rem, env(safe-area-inset-top));
+  padding-right: max(1.5rem, env(safe-area-inset-right));
+  padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+  padding-left: max(1.5rem, env(safe-area-inset-left));
 }

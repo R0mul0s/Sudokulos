@@ -71,7 +71,7 @@ export function GameScreen() {
 
       {showOverlay && (
         <div
-          className="fixed inset-0 z-10 flex items-center justify-center bg-slate-900/60 p-6"
+          className="fixed inset-0 z-10 flex items-center justify-center bg-slate-900/60 modal-safe-area"
           role="dialog"
           aria-modal="true"
         >
