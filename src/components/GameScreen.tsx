@@ -7,12 +7,14 @@
 import { useTranslation } from 'react-i18next';
 import { useGameStore } from '@/store/gameStore';
 import { useSettingsStore } from '@/store/settingsStore';
+import { useRunStore } from '@/store/runStore';
 import { useGameTimer } from '@/hooks/useGameTimer';
 import { useKeyboardControls } from '@/hooks/useKeyboardControls';
 import { Board } from './Board';
 import { Controls } from './Controls';
 import { NumberPad } from './NumberPad';
 import { Timer } from './Timer';
+import { RunHud } from './rpg/RunHud';
 import { formatElapsed } from './format';
 
 export function GameScreen() {
@@ -26,13 +28,16 @@ export function GameScreen() {
   const startNewGame = useGameStore((s) => s.startNewGame);
   const resume = useGameStore((s) => s.resume);
   const maxMistakes = useSettingsStore((s) => s.maxMistakes);
+  const runActive = useRunStore((s) => s.run !== null);
 
   useGameTimer();
   useKeyboardControls();
 
   const showCompleted = status === 'completed';
   const showFailed = status === 'failed';
-  const showOverlay = showCompleted || showFailed;
+  // V run módu se completed/failed řeší přes Reward / RunEnd obrazovky,
+  // ne přes lokální overlay v puzzle.
+  const showOverlay = !runActive && (showCompleted || showFailed);
 
   return (
     <div className="flex w-full flex-col gap-4">
@@ -48,6 +53,8 @@ export function GameScreen() {
           {t(`difficulty.${difficulty}`)}
         </span>
       </header>
+
+      {runActive && <RunHud />}
 
       <Timer />
 

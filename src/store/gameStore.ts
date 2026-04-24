@@ -29,6 +29,7 @@ import { generateKillerPuzzle } from '@/game/killer/generator';
 import type { Cage } from '@/types/killer';
 import { useSettingsStore } from './settingsStore';
 import { useStatsStore, type GameOutcome } from './statsStore';
+import { useRunStore } from './runStore';
 
 export type GameStatus =
   | 'menu'
@@ -133,6 +134,56 @@ function recordOutcome(state: GameStoreState, outcome: GameOutcome): void {
     mistakes: state.mistakes,
     hintsUsed: state.hintsUsed,
   });
+}
+
+/** True pokud group 9 hodnot tvoří kompletní set 1-9 bez duplicit. */
+function isGroupFilledUnique(values: readonly number[]): boolean {
+  if (values.length !== BOARD_SIZE) return false;
+  for (const v of values) {
+    if (v < 1 || v > 9) return false;
+  }
+  return new Set(values).size === BOARD_SIZE;
+}
+
+/** Hodnoty v řádku, sloupci a 3×3 bloku (v tomto pořadí) obsahující (row, col). */
+function getGroupsFor(
+  grid: Grid,
+  row: number,
+  col: number,
+): [number[], number[], number[]] {
+  const rowCells = grid[row].slice();
+  const colCells: number[] = [];
+  for (let r = 0; r < BOARD_SIZE; r++) colCells.push(grid[r][col]);
+  const blockCells: number[] = [];
+  const br = Math.floor(row / BLOCK_SIZE) * BLOCK_SIZE;
+  const bc = Math.floor(col / BLOCK_SIZE) * BLOCK_SIZE;
+  for (let r = br; r < br + BLOCK_SIZE; r++) {
+    for (let c = bc; c < bc + BLOCK_SIZE; c++) {
+      blockCells.push(grid[r][c]);
+    }
+  }
+  return [rowCells, colCells, blockCells];
+}
+
+/**
+ * Spočítá kolik skupin (řádek / sloupec / blok obsahující danou buňku) se
+ * stalo nově kompletními přechodem z beforeGrid na afterGrid. 0-3.
+ */
+function countNewlyCompletedGroups(
+  beforeGrid: Grid,
+  afterGrid: Grid,
+  row: number,
+  col: number,
+): number {
+  const before = getGroupsFor(beforeGrid, row, col);
+  const after = getGroupsFor(afterGrid, row, col);
+  let count = 0;
+  for (let i = 0; i < 3; i++) {
+    if (isGroupFilledUnique(after[i]) && !isGroupFilledUnique(before[i])) {
+      count++;
+    }
+  }
+  return count;
 }
 
 /** Najde první prázdnou buňku na desce — pro hint. Vrací null pokud žádná není. */
@@ -329,9 +380,11 @@ export const useGameStore = create<GameStore>()(
         const nextMistakes = isMistake
           ? get().mistakes + 1
           : get().mistakes;
+        const runActive = useRunStore.getState().run !== null;
 
         let nextStatus: GameStatus = 'playing';
-        if (maxMistakes > 0 && nextMistakes >= maxMistakes) {
+        // V RPG run módu se klasický mistake limit ignoruje — HP řídí runStore.
+        if (!runActive && maxMistakes > 0 && nextMistakes >= maxMistakes) {
           nextStatus = 'failed';
         } else if (
           !isMistake &&
@@ -348,13 +401,33 @@ export const useGameStore = create<GameStore>()(
           status: nextStatus,
         });
 
+        if (runActive) {
+          if (isMistake) {
+            useRunStore.getState().recordMistake();
+            triggerHaptic('error');
+          } else {
+            const beforeGrid = boardToGrid(board);
+            const afterGrid = boardToGrid(newBoard);
+            const chainCount = countNewlyCompletedGroups(
+              beforeGrid,
+              afterGrid,
+              row,
+              col,
+            );
+            useRunStore.getState().recordCorrect(chainCount);
+          }
+        }
+
         if (nextStatus === 'completed') {
           triggerHaptic('success');
           recordOutcome(get(), 'completed');
+          if (runActive) {
+            useRunStore.getState().finishCurrentLevel(get().elapsedMs);
+          }
         } else if (nextStatus === 'failed') {
           triggerHaptic('fail');
           recordOutcome(get(), 'failed');
-        } else if (isMistake) {
+        } else if (isMistake && !runActive) {
           triggerHaptic('error');
         }
       },

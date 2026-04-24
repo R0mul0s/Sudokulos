@@ -86,5 +86,70 @@
   "install": {
     "title": "Install as app",
     "subtitle": "Offline, quick launch, no browser chrome"
+  },
+  "rpg": {
+    "menuTitle": "RPG Run",
+    "menuSubtitle": "🪙 {{souls}} · 🏆 {{wins}}",
+    "startRun": "Start run",
+    "continueRun": "Continue run",
+    "mapTitle": "Run map",
+    "progress": "Progress",
+    "nextNode": "Next node",
+    "startLevel": "Enter",
+    "abandon": "Abandon run",
+    "confirmAbandon": "Really abandon current run? Progress will be lost.",
+    "levelLabel": "Node {{current}} / {{total}}",
+    "relicsLabel": "Relics",
+    "nodeType": {
+      "battle": "Battle",
+      "elite": "Elite",
+      "mystery": "Mystery",
+      "shop": "Shop",
+      "boss": "Boss"
+    },
+    "reward": {
+      "title": "Reward",
+      "subtitle": "Pick one of three — final choice.",
+      "goldTitle": "Gold +{{amount}}",
+      "goldDesc": "Adds gold to your pouch.",
+      "potionHpTitle": "Life potion +{{amount}} HP",
+      "potionHpDesc": "Immediately restores HP (up to max)."
+    },
+    "relic": {
+      "amulet_of_insight": {
+        "name": "Amulet of Insight",
+        "desc": "Notes (candidates) auto-update after every move."
+      },
+      "copper_ring": {
+        "name": "Copper Ring",
+        "desc": "+10 gold per completed level."
+      },
+      "leather_glove": {
+        "name": "Leather Glove",
+        "desc": "+1 max HP and instant heal by 1."
+      },
+      "dragon_scale": {
+        "name": "Dragon Scale",
+        "desc": "First mistake each level is forgiven (no HP loss)."
+      },
+      "phoenix": {
+        "name": "Phoenix",
+        "desc": "Once per run, revives you at 1 HP on death."
+      }
+    },
+    "end": {
+      "winTitle": "Victory!",
+      "loseTitle": "You fell",
+      "winSubtitle": "You finished the run and beat the boss.",
+      "loseSubtitle": "You cleared {{completed}} / {{total}} nodes.",
+      "soulsEarned": "Souls earned",
+      "time": "Time",
+      "bestCombo": "Best combo",
+      "gold": "Gold",
+      "mistakes": "Mistakes",
+      "finalHp": "Final HP",
+      "collectedRelics": "Collected relics",
+      "backToMenu": "Back to menu"
+    }
   }
 }

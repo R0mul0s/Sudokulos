@@ -86,5 +86,70 @@
   "install": {
     "title": "Nainstalovat jako aplikaci",
     "subtitle": "Offline, rychlé spuštění, bez prohlížeče"
+  },
+  "rpg": {
+    "menuTitle": "RPG Run",
+    "menuSubtitle": "🪙 {{souls}} · 🏆 {{wins}}",
+    "startRun": "Spustit run",
+    "continueRun": "Pokračovat v runu",
+    "mapTitle": "Mapa runu",
+    "progress": "Postup",
+    "nextNode": "Další uzel",
+    "startLevel": "Vstoupit",
+    "abandon": "Vzdát run",
+    "confirmAbandon": "Opravdu vzdát aktuální run? Průběh se ztratí.",
+    "levelLabel": "Uzel {{current}} / {{total}}",
+    "relicsLabel": "Relikty",
+    "nodeType": {
+      "battle": "Bitva",
+      "elite": "Elita",
+      "mystery": "Tajemství",
+      "shop": "Obchod",
+      "boss": "Boss"
+    },
+    "reward": {
+      "title": "Odměna",
+      "subtitle": "Vyber si jednu ze tří — volba je finální.",
+      "goldTitle": "Zlato +{{amount}}",
+      "goldDesc": "Přidá zlato do tvého váčku.",
+      "potionHpTitle": "Lektvar života +{{amount}} HP",
+      "potionHpDesc": "Okamžitě obnoví život (max do plného HP)."
+    },
+    "relic": {
+      "amulet_of_insight": {
+        "name": "Amulet vhledu",
+        "desc": "Po každém tahu se automaticky aktualizují poznámky (kandidáti)."
+      },
+      "copper_ring": {
+        "name": "Měděný prsten",
+        "desc": "+10 zlata za každý dokončený level."
+      },
+      "leather_glove": {
+        "name": "Kožená rukavice",
+        "desc": "+1 maximální HP a okamžité vyléčení o 1."
+      },
+      "dragon_scale": {
+        "name": "Dračí šupina",
+        "desc": "První chyba v každém levelu je odpuštěná (nesebere HP)."
+      },
+      "phoenix": {
+        "name": "Fénix",
+        "desc": "Jednou za run při smrti oživne hráče s 1 HP."
+      }
+    },
+    "end": {
+      "winTitle": "Vítězství!",
+      "loseTitle": "Padl jsi",
+      "winSubtitle": "Prošel jsi celým runem a porazil bosse.",
+      "loseSubtitle": "Zvládl jsi {{completed}} / {{total}} uzlů.",
+      "soulsEarned": "Získaná souls",
+      "time": "Čas",
+      "bestCombo": "Největší combo",
+      "gold": "Zlato",
+      "mistakes": "Chyby",
+      "finalHp": "HP při konci",
+      "collectedRelics": "Nasbírané relikty",
+      "backToMenu": "Zpět do menu"
+    }
   }
 }
