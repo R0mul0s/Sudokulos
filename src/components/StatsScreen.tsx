@@ -1,12 +1,13 @@
 /**
- * Obrazovka statistik — overall metriky, per-obtížnost, streak a reset.
+ * Obrazovka statistik — přepínač módu (klasika / killer), overall metriky,
+ * per-obtížnost, streak a reset historie.
  *
  * @author Roman Hlaváček
  * @created 2026-04-24
  */
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { Difficulty } from '@/types/game';
+import type { Difficulty, GameMode } from '@/types/game';
 import { DIFFICULTY_ORDER } from '@/game/difficulty';
 import {
   computeDifficultyStats,
@@ -20,6 +21,8 @@ import { formatElapsed } from './format';
 interface StatsScreenProps {
   onClose: () => void;
 }
+
+const AVAILABLE_MODES: readonly GameMode[] = ['classic', 'killer'];
 
 function StatTile({
   label,
@@ -103,16 +106,28 @@ export function StatsScreen({ onClose }: StatsScreenProps) {
   const { t, i18n } = useTranslation();
   const history = useStatsStore((s) => s.history);
   const clearAll = useStatsStore((s) => s.clearAll);
+  const [mode, setMode] = useState<GameMode>('classic');
 
-  const overall = useMemo(() => computeOverallStats(history), [history]);
-  const streak = useMemo(() => computeStreak(history), [history]);
+  const filteredHistory = useMemo(
+    () => history.filter((r) => r.mode === mode),
+    [history, mode],
+  );
+
+  const overall = useMemo(
+    () => computeOverallStats(filteredHistory),
+    [filteredHistory],
+  );
+  const streak = useMemo(
+    () => computeStreak(filteredHistory),
+    [filteredHistory],
+  );
   const perDifficulty = useMemo(
     () =>
       DIFFICULTY_ORDER.map((difficulty) => ({
         difficulty,
-        stats: computeDifficultyStats(history, difficulty),
+        stats: computeDifficultyStats(filteredHistory, difficulty),
       })),
-    [history],
+    [filteredHistory],
   );
 
   const successPercent = new Intl.NumberFormat(i18n.language, {
@@ -140,6 +155,28 @@ export function StatsScreen({ onClose }: StatsScreenProps) {
           {t('stats.close')}
         </button>
       </header>
+
+      <div className="grid grid-cols-2 gap-2">
+        {AVAILABLE_MODES.map((m) => {
+          const selected = mode === m;
+          return (
+            <button
+              key={m}
+              type="button"
+              onClick={() => setMode(m)}
+              aria-pressed={selected}
+              className={[
+                'rounded-xl px-3 py-2 text-sm font-medium shadow-sm transition',
+                selected
+                  ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900'
+                  : 'bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100',
+              ].join(' ')}
+            >
+              {t(`mode.${m}`)}
+            </button>
+          );
+        })}
+      </div>
 
       <section className="grid grid-cols-3 gap-2">
         <StatTile

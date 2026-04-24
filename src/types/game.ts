@@ -25,8 +25,8 @@ export type Board = Cell[][];
 
 export type Difficulty = 'easy' | 'medium' | 'hard' | 'expert';
 
-/** Rozšiřitelný seznam herních módů (zatím jen klasika) */
-export type GameMode = 'classic';
+/** Rozšiřitelný seznam herních módů */
+export type GameMode = 'classic' | 'killer';
 
 export interface GameState {
   board: Board;

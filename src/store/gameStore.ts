@@ -25,6 +25,8 @@ import { boardToGrid } from '@/game/board';
 import { generatePuzzle } from '@/game/generator';
 import { triggerHaptic } from '@/game/haptics';
 import { findConflicts } from '@/game/validator';
+import { generateKillerPuzzle } from '@/game/killer/generator';
+import type { Cage } from '@/types/killer';
 import { useSettingsStore } from './settingsStore';
 import { useStatsStore, type GameOutcome } from './statsStore';
 
@@ -53,6 +55,8 @@ interface GameStoreState {
   mode: GameMode;
   board: Board | null;
   solution: Grid | null;
+  /** Klece pro killer mód; null pro klasiku. */
+  cages: Cage[] | null;
   selected: Position | null;
   noteMode: boolean;
   elapsedMs: number;
@@ -88,6 +92,7 @@ const INITIAL_STATE: GameStoreState = {
   mode: 'classic',
   board: null,
   solution: null,
+  cages: null,
   selected: null,
   noteMode: false,
   elapsedMs: 0,
@@ -206,6 +211,30 @@ export const useGameStore = create<GameStore>()(
       ...INITIAL_STATE,
 
       startNewGame: (difficulty, mode = 'classic') => {
+        if (mode === 'killer') {
+          const { cages, solution } = generateKillerPuzzle(difficulty);
+          const emptyBoard = boardFromPuzzle(
+            Array.from({ length: BOARD_SIZE }, () =>
+              new Array<number>(BOARD_SIZE).fill(EMPTY_CELL),
+            ),
+          );
+          set({
+            status: 'playing',
+            difficulty,
+            mode,
+            board: emptyBoard,
+            solution,
+            cages,
+            selected: null,
+            noteMode: false,
+            elapsedMs: 0,
+            mistakes: 0,
+            hintsUsed: 0,
+            history: [],
+          });
+          return;
+        }
+
         const { puzzle, solution } = generatePuzzle(difficulty);
         set({
           status: 'playing',
@@ -213,6 +242,7 @@ export const useGameStore = create<GameStore>()(
           mode,
           board: boardFromPuzzle(puzzle),
           solution,
+          cages: null,
           selected: null,
           noteMode: false,
           elapsedMs: 0,
@@ -478,6 +508,7 @@ export const useGameStore = create<GameStore>()(
         mode: state.mode,
         board: state.board ? serializeBoard(state.board) : null,
         solution: state.solution,
+        cages: state.cages,
         elapsedMs: state.elapsedMs,
         mistakes: state.mistakes,
         hintsUsed: state.hintsUsed,
@@ -493,6 +524,7 @@ export const useGameStore = create<GameStore>()(
           mode: GameMode;
           board: SerializedCell[][] | null;
           solution: Grid | null;
+          cages: Cage[] | null;
           elapsedMs: number;
           mistakes: number;
           hintsUsed: number;
@@ -512,6 +544,7 @@ export const useGameStore = create<GameStore>()(
           mode: p.mode ?? currentState.mode,
           board: p.board ? deserializeBoard(p.board) : null,
           solution: p.solution ?? null,
+          cages: p.cages ?? null,
           elapsedMs: p.elapsedMs ?? 0,
           mistakes: p.mistakes ?? 0,
           hintsUsed: p.hintsUsed ?? 0,

@@ -119,36 +119,41 @@ Kódová část hotová, deploy je na uživateli.
 
 ---
 
-## Fáze 6 — Killer Sudoku ⏳
-
-Samostatná fáze, protože přidává vlastní doménu (klece, součty).
+## Fáze 6 — Killer Sudoku ✅
 
 ### 6.1 Datový model
 
-- [ ] Rozšířit `types/game.ts` o `Cage` (buňky + cílový součet) a `GameMode = 'classic' | 'killer'`
-- [ ] `types/killer.ts` — killer-specifické typy, validační pravidla
+- ✅ `GameMode = 'classic' | 'killer'`
+- ✅ `types/killer.ts` — `Cage { id, sum, cells }`, `KillerPuzzle`
 
 ### 6.2 Logika
 
-- [ ] `game/killer/validator.ts` — validace součtu klece + pravidlo unikátnosti čísel v kleci
-- [ ] `game/killer/generator.ts` — generátor klecí nad plným řešením
-  - Algoritmus: pokryj mřížku klecemi velikosti 1–5 (laděno obtížností), zachovat uniqueness
-- [ ] `game/killer/solver.ts` — rozšíření solveru o omezení součtů (constraint propagation)
+- ✅ `game/killer/config.ts` — min/max velikost klecí per obtížnost
+- ✅ `game/killer/validator.ts` — buildCageLookup, findCageConflicts (duplicity + součty), isValidKillerPlacement
+- ✅ `game/killer/solver.ts` — backtracking s distinct min/maxSumOfN propagací, ploché buffery místo Map
+- ✅ `game/killer/generator.ts` — growing algoritmus (4-adjacentní buňky bez duplicitních hodnot v solution), ověření unikátnosti přes countKillerSolutions
 
 ### 6.3 UI
 
-- [ ] `components/killer/CageOverlay.tsx` — přerušované ohraničení klecí přes mřížku
-- [ ] `components/killer/CageSum.tsx` — štítek se součtem v levém horním rohu klece
-- [ ] Rozšíření `Cell.tsx` o klec awareness (nezobrazovat duplicitní čísla v kleci)
+- ✅ `components/killer/CageOverlay.tsx` — SVG overlay s přerušovanou čarou okolo klecí + sum label (dark: support)
+- ✅ `Board` kreslí CageOverlay v killer módu a k `findConflicts` přidává `findCageConflicts` pro error indikaci
 
 ### 6.4 Integrace
 
-- [ ] `DifficultyPicker` rozšířit o výběr módu (klasika / killer)
-- [ ] i18n překlady pro killer
-- [ ] Perzistence killer rozehrané hry
-- [ ] Statistiky killer zvlášť
+- ✅ MenuScreen: toggle klasika/killer nad výběrem obtížnosti
+- ✅ gameStore: `cages: Cage[] | null`, startNewGame větví, persist cages
+- ✅ i18n: `mode.classic/killer`, `menu.chooseMode`
+- ✅ StatsScreen: filtr historie podle vybraného módu (klasika/killer samostatně)
 
-**DoD:** killer sudoku hratelné ve všech obtížnostech, generátor vytváří validní zadání, UI zřetelně odlišuje klece.
+**Konfigurace klecí:**
+- Easy: max 2 (hlavně dvojice — silný constraint)
+- Medium: max 3
+- Hard: max 4
+- Expert: max 4 (původně 5 — generátor trval >5 s, kvůli non-unique puzzles nutných k regeneraci)
+
+**Testy:** 25 nových (validator 13, solver 6, generator 6). Celkem 135. Solver běží na plochých číselných bufferech s `minSumOfN`/`maxSumOfN` pro přesnou dolní/horní mez zbývajících součtů. Build 92.8 kB gzipped.
+
+**DoD splněno:** killer sudoku hratelné ve všech obtížnostech, zadání s garantovaně unikátním řešením, UI kreslí klece přes mřížku, statistiky rozlišují módy.
 
 ---
 

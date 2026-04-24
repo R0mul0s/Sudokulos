@@ -9,7 +9,12 @@
     "settings": "Nastavení",
     "stats": "Statistiky",
     "chooseDifficulty": "Vyber obtížnost",
-    "gameInProgress": "Rozehraná {{difficulty}} hra — {{time}}"
+    "chooseMode": "Vyber mód",
+    "gameInProgress": "Rozehraná {{mode}} {{difficulty}} — {{time}}"
+  },
+  "mode": {
+    "classic": "Klasika",
+    "killer": "Killer"
   },
   "difficulty": {
     "label": "Obtížnost",

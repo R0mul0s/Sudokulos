@@ -9,7 +9,12 @@
     "settings": "Settings",
     "stats": "Statistics",
     "chooseDifficulty": "Choose difficulty",
-    "gameInProgress": "{{difficulty}} game in progress — {{time}}"
+    "chooseMode": "Choose mode",
+    "gameInProgress": "{{mode}} {{difficulty}} in progress — {{time}}"
+  },
+  "mode": {
+    "classic": "Classic",
+    "killer": "Killer"
   },
   "difficulty": {
     "label": "Difficulty",

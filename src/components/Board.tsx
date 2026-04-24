@@ -1,5 +1,6 @@
 /**
  * Hlavní herní deska 9×9. Čte stav ze storu a zařizuje zvýraznění.
+ * V killer módu vykresluje nad mřížkou overlay s ohraničením klecí a součty.
  *
  * @author Roman Hlaváček
  * @created 2026-04-24
@@ -8,9 +9,11 @@ import { useMemo } from 'react';
 import { BLOCK_SIZE, BOARD_SIZE } from '@/game/constants';
 import { boardToGrid } from '@/game/board';
 import { findConflicts } from '@/game/validator';
+import { findCageConflicts } from '@/game/killer/validator';
 import { useGameStore } from '@/store/gameStore';
 import { useSettingsStore } from '@/store/settingsStore';
 import { Cell } from './Cell';
+import { CageOverlay } from './killer/CageOverlay';
 
 function isPeer(
   row: number,
@@ -30,15 +33,24 @@ function isPeer(
 export function Board() {
   const board = useGameStore((s) => s.board);
   const solution = useGameStore((s) => s.solution);
+  const cages = useGameStore((s) => s.cages);
+  const mode = useGameStore((s) => s.mode);
   const selected = useGameStore((s) => s.selected);
   const selectCell = useGameStore((s) => s.selectCell);
   const highlightSameDigits = useSettingsStore((s) => s.highlightSameDigits);
 
   const conflictSet = useMemo(() => {
     if (!board) return new Set<string>();
-    const conflicts = findConflicts(boardToGrid(board));
-    return new Set(conflicts.map((p) => `${p.row},${p.col}`));
-  }, [board]);
+    const grid = boardToGrid(board);
+    const classic = findConflicts(grid);
+    const all = new Set(classic.map((p) => `${p.row},${p.col}`));
+    if (mode === 'killer' && cages) {
+      for (const p of findCageConflicts(grid, cages)) {
+        all.add(`${p.row},${p.col}`);
+      }
+    }
+    return all;
+  }, [board, mode, cages]);
 
   if (!board) return null;
 
@@ -49,7 +61,7 @@ export function Board() {
 
   return (
     <div
-      className="grid aspect-square w-full max-w-[min(100vw-2rem,32rem)] grid-cols-9 grid-rows-9 rounded-md bg-surface shadow-sm dark:shadow-none"
+      className="relative grid aspect-square w-full max-w-[min(100vw-2rem,32rem)] grid-cols-9 grid-rows-9 rounded-md bg-surface shadow-sm dark:shadow-none"
       role="grid"
       aria-label="Sudoku deska"
     >
@@ -86,6 +98,7 @@ export function Board() {
           );
         }),
       )}
+      {mode === 'killer' && cages && <CageOverlay cages={cages} />}
       <span className="sr-only">{`Deska ${BOARD_SIZE}×${BOARD_SIZE}`}</span>
     </div>
   );
