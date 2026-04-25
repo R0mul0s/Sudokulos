@@ -14,6 +14,8 @@ import { PowerUpButton } from './PowerUpButton';
 const ENV_EFFECT_EMOJI: Record<EnvEffect, string> = {
   storm: '🌩️',
   light: '☀️',
+  frost: '❄️',
+  dark: '🌑',
 };
 
 function BloodAltarButton() {

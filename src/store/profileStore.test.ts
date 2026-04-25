@@ -94,6 +94,24 @@ describe('profileStore', () => {
     });
   });
 
+  describe('markTutorialSeen', () => {
+    it('ve výchozím stavu má tutorialSeen=false', () => {
+      expect(useProfileStore.getState().profile.tutorialSeen).toBe(false);
+    });
+
+    it('po zavolání nastaví tutorialSeen=true', () => {
+      useProfileStore.getState().markTutorialSeen();
+      expect(useProfileStore.getState().profile.tutorialSeen).toBe(true);
+    });
+
+    it('opětovné volání je idempotentní', () => {
+      useProfileStore.getState().markTutorialSeen();
+      const before = useProfileStore.getState().profile;
+      useProfileStore.getState().markTutorialSeen();
+      expect(useProfileStore.getState().profile).toBe(before);
+    });
+  });
+
   describe('unlockRelic', () => {
     it('odemkne rare relic pokud má hráč dost souls', () => {
       useProfileStore.setState((state) => ({

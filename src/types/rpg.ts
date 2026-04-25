@@ -12,8 +12,10 @@ export type NodeType = 'battle' | 'elite' | 'mystery' | 'shop' | 'boss';
  * Environmental effect aktivní během puzzle levelu.
  * - storm: každých 60 s smaže náhodnou poznámku
  * - light: při startu levelu −1 HP, ale fast-level threshold se prodlouží o 30 s
+ * - frost: 2 náhodné prázdné buňky jsou zamrzlé (nelze editovat); rotace každých 20 s
+ * - dark: viditelný jen 3×3 blok kolem výběru, zbytek desky ztmavený
  */
-export type EnvEffect = 'storm' | 'light';
+export type EnvEffect = 'storm' | 'light' | 'frost' | 'dark';
 
 /** Jeden uzel v run mapě. */
 export interface RunNode {
@@ -157,4 +159,6 @@ export interface PlayerProfile {
   unlockedRelics: RelicId[];
   /** Per-třída agregace dohraných runů. */
   perClassRuns: Partial<Record<CharacterClass, ClassRunStats>>;
+  /** Hráč už viděl onboarding tutorial pro RPG mód. */
+  tutorialSeen: boolean;
 }

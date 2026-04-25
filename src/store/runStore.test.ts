@@ -23,6 +23,7 @@ describe('runStore', () => {
         consumedLuckyCells: [],
         pendingMystery: null,
         shopOffer: null,
+        frozenCells: [],
       },
     });
     useProfileStore.getState().resetProfile();
@@ -656,6 +657,25 @@ describe('runStore', () => {
       const hpBefore = useRunStore.getState().run!.player.hp;
       useRunStore.getState().applyEnvEffectOnLevelStart();
       expect(useRunStore.getState().run!.player.hp).toBe(hpBefore);
+    });
+
+    it('freezeRandomCells vybere požadovaný počet buněk', () => {
+      useRunStore.getState().startRun('warrior', 7);
+      const empty: Array<[number, number]> = [];
+      for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) empty.push([r, c]);
+      useRunStore.getState().freezeRandomCells(empty, 2);
+      const frozen = useRunStore.getState().levelState.frozenCells;
+      expect(frozen).toHaveLength(2);
+      expect(new Set(frozen).size).toBe(2);
+    });
+
+    it('freezeRandomCells s prázdným polem vyčistí frozenCells', () => {
+      useRunStore.getState().startRun('warrior', 7);
+      useRunStore.setState((state) => ({
+        levelState: { ...state.levelState, frozenCells: ['1,1', '2,2'] },
+      }));
+      useRunStore.getState().freezeRandomCells([], 2);
+      expect(useRunStore.getState().levelState.frozenCells).toHaveLength(0);
     });
   });
 

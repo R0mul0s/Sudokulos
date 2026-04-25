@@ -225,6 +225,14 @@
       "light": {
         "name": "Světlo",
         "desc": "Spalující jas — −1 HP na startu, ale práh pro fast bonus se prodlouží o 30 s."
+      },
+      "frost": {
+        "name": "Mráz",
+        "desc": "Dvě prázdné buňky jsou zamrzlé a nelze je editovat. Každých 20 s rotuje výběr."
+      },
+      "dark": {
+        "name": "Temnota",
+        "desc": "Vidíš jen aktuální 3×3 blok kolem výběru. Ostatní buňky jsou ztmavené."
       }
     },
     "powerUp": {
@@ -276,6 +284,44 @@
       "leave": "Opustit obchod",
       "potionHpTitle": "Lektvar života",
       "potionHpDesc": "+1 HP okamžitě (max do plného)."
+    },
+    "tutorial": {
+      "openLabel": "Návod k RPG módu",
+      "stepLabel": "Krok {{current}} / {{total}}",
+      "skip": "Přeskočit",
+      "prev": "Zpět",
+      "next": "Dál",
+      "done": "Pochopeno",
+      "steps": {
+        "welcome": {
+          "title": "Vítej v RPG módu",
+          "body": "Projdeš sérií 8 uzlů — bitev, tajemství, obchod a finální boss. Každý run je jedna epizoda; smrt znamená konec, ale získané souls si neseš s sebou."
+        },
+        "hp": {
+          "title": "Životy (HP)",
+          "body": "Každá chyba v puzzle bere 1 HP. Když HP klesne na 0, run končí. HP doplníš lektvarem, odpočinkem v tajemném uzlu nebo některými relikvemi."
+        },
+        "lucky": {
+          "title": "Šťastné buňky ⭐",
+          "body": "Na startu levelu se objeví 3 označené buňky. Správná hodnota přidá zlato a manu, špatná stojí dvojnásobné HP. Zvaž, jestli ji vyplnit naslepo."
+        },
+        "combo": {
+          "title": "Combo a chain reakce 🔥",
+          "body": "Po sobě jdoucí správné odpovědi zvyšují combo a dávají bonus zlata. Dokončením celé řady, sloupce nebo bloku jedním tahem spustíš chain reakci s bonusem zlata a many."
+        },
+        "relics": {
+          "title": "Relikvie 🔮",
+          "body": "Pasivní bonusy, které ti zůstanou po celý run. Sbírej je z odměn, tajemných uzlů a obchodů. Stack se sčítá — silné kombinace mění hru."
+        },
+        "envEffects": {
+          "title": "Environmentální efekty 🌩️",
+          "body": "Elite a boss uzly mají náhodný efekt — bouře maže poznámky, světlo bere HP, mráz mrazí buňky, temnota skrývá desku. Adaptuj strategii."
+        },
+        "souls": {
+          "title": "Souls 🪙",
+          "body": "Souls získáš za každý run (i prohraný). Utratíš je v Souls shopu za nové třídy a vzácné relikvie do dropping poolu pro další runy."
+        }
+      }
     },
     "end": {
       "winTitle": "Vítězství!",

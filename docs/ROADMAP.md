@@ -174,7 +174,7 @@ Nápady, které se vyhodnotí až po dokončení 0–6.
 
 Nový herní mód nad existujícím sudoku enginem. Hráč prochází **run** = sekvenci 5–7 puzzle úrovní rostoucí obtížnosti, sbírá relics a zlato, bojuje proti bossovi, umírá (permadeath) a nese si jen **souls** jako meta progression.
 
-**Stav:** 8.1 MVP ✅ · 8.2 Rozšíření ✅ · 8.3 Polish 🚧 (animace + 2 env effects hotové, boss varianty + tutorial odložené)
+**Stav:** 8.1 MVP ✅ · 8.2 Rozšíření ✅ · 8.3 Polish ✅ (animace, 4 env effects, tutorial; boss varianty a zvuky odložené)
 
 ### 8.1 Game loop — 4 zoomy
 
@@ -360,24 +360,28 @@ Rozdělené do 4 vln pro postupné iterace.
 
 Celkem: **15 relics** (5 common, 5 uncommon, 5 rare), **3 třídy**, **8 uzlů per run**, **182 testů**, build 106 kB gzipped.
 
-#### Fáze 8.3 — Polish 🚧
+#### Fáze 8.3 — Polish ✅
 
 **Hotovo:**
 - ✅ CSS animace: `chain-flash` (pulz nad dokončenou skupinou), `lucky-pop` (drop-shadow + scale na lucky cell), `combo-pop` (scale combo counteru)
 - ✅ gameStore exportuje `lastFilled` a `lastChain` jako anim trigger; Cell respektuje `luckyPopAt` prop, Board renderuje `ChainFlashOverlay`
-- ✅ Environmental effects (omezeno na 2 typy):
+- ✅ Environmental effects — kompletní 4 typy:
   - **Bouře** 🌩️ — `useStormEffect` hook, každých 60 s `gameStore.deleteRandomNote`
   - **Světlo** ☀️ — `applyEnvEffectOnLevelStart` snižuje HP o 1 (clamp 1), `finishCurrentLevel` přidá +30 s k fast threshold
-- ✅ Random env effect přiřazen na elite a boss uzly v `buildRunNodes(rng)` přes seed
+  - **Mráz** ❄️ — `useFrostEffect` hook drží 2 zamrzlé prázdné buňky (rotace každých 20 s), gameStore.setDigit/toggleNote/erase respektuje guard
+  - **Temnota** 🌑 — Board ztmaví všechny buňky mimo aktuální 3×3 blok kolem výběru (čistě vizuální)
+- ✅ Random env effect přiřazen na elite a boss uzly v `buildRunNodes(rng)` přes seed (nyní pool 4 efektů)
 - ✅ Badge env effectu v RunHud header
-- ✅ i18n + 3 nové testy. Celkem 185, build 107 kB gzipped.
+- ✅ Tutorial / onboarding pro RPG mód:
+  - `RpgTutorialModal` — 7 stránek (Welcome / HP / Lucky / Combo / Relics / Env effects / Souls)
+  - `profileStore.tutorialSeen` flag (persist v3 s migrate); `markTutorialSeen` action
+  - Auto-open při prvním vstupu do RunMapScreen; otvírá se i tlačítkem `?` v hlavičce
+- ✅ i18n (cs/en) — kompletní lokalizace, 6 nových testů (frost + tutorial). Celkem 190, build 109.8 kB gzipped.
 
 **Odloženo:**
-- ⏳ Mráz a Temnota (vyžadují víc UI úprav)
-- ⏳ Boss variants (diagonal sudoku, speciální killer s časovým limitem)
+- ⏳ Boss variants (diagonal sudoku, speciální killer s časovým limitem) — větší samostatná feature
 - ⏳ Zvuková odezva (závisí na audio assetech)
-- ⏳ Tutorial / onboarding první run
-- ⏳ Vyladění obtížnostní křivky podle telemetrie
+- ⏳ Vyladění obtížnostní křivky podle telemetrie (chybí data)
 
 ### 8.8 Závislosti a rizika
 

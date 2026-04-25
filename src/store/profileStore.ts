@@ -35,6 +35,7 @@ const DEFAULT_PROFILE: PlayerProfile = {
   unlockedClasses: ['warrior'],
   unlockedRelics: [...STARTER_RELIC_IDS],
   perClassRuns: {},
+  tutorialSeen: false,
 };
 
 interface ProfileState {
@@ -45,6 +46,7 @@ interface ProfileActions {
   recordRunResult: (result: RunResult) => void;
   unlockClass: (cls: CharacterClass) => boolean;
   unlockRelic: (id: RelicId) => boolean;
+  markTutorialSeen: () => void;
   /** Debug / reset pro testy. */
   resetProfile: () => void;
 }
@@ -125,6 +127,12 @@ export const useProfileStore = create<ProfileStore>()(
         return true;
       },
 
+      markTutorialSeen: () => {
+        const { profile } = get();
+        if (profile.tutorialSeen) return;
+        set({ profile: { ...profile, tutorialSeen: true } });
+      },
+
       resetProfile: () => {
         set({ profile: DEFAULT_PROFILE });
       },
@@ -132,12 +140,23 @@ export const useProfileStore = create<ProfileStore>()(
     {
       name: 'sudoku.profile',
       storage: createJSONStorage(() => localStorage),
-      version: 2,
+      version: 3,
       migrate: (persisted, version) => {
+        const old = persisted as { profile?: Partial<PlayerProfile> };
         if (version < 2) {
-          const old = persisted as { profile?: Partial<PlayerProfile> };
           return {
             profile: { ...DEFAULT_PROFILE, ...(old.profile ?? {}) },
+          };
+        }
+        if (version < 3) {
+          // Doplníme tutorialSeen — starý hráč už mód viděl, modal mu
+          // neukazujeme, aby ho neotravoval.
+          return {
+            profile: {
+              ...DEFAULT_PROFILE,
+              ...(old.profile ?? {}),
+              tutorialSeen: true,
+            },
           };
         }
         return persisted as ProfileState;

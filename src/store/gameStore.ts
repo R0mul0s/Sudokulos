@@ -432,6 +432,14 @@ export const useGameStore = create<GameStore>()(
         const target = board[row][col];
         if (target.given) return;
         if (target.value === value) return;
+        // Frost env effect — zamrzlou buňku nelze editovat.
+        if (
+          useRunStore
+            .getState()
+            .levelState.frozenCells.includes(`${row},${col}`)
+        ) {
+          return;
+        }
 
         const autoRemoveNotes = useSettingsStore.getState().autoRemoveNotes;
         const maxMistakes = useSettingsStore.getState().maxMistakes;
@@ -539,6 +547,13 @@ export const useGameStore = create<GameStore>()(
         const { row, col } = selected;
         const target = board[row][col];
         if (target.given || target.value !== EMPTY_CELL) return;
+        if (
+          useRunStore
+            .getState()
+            .levelState.frozenCells.includes(`${row},${col}`)
+        ) {
+          return;
+        }
 
         const newNotes = new Set(target.notes);
         if (newNotes.has(value)) newNotes.delete(value);
@@ -578,6 +593,13 @@ export const useGameStore = create<GameStore>()(
         const target = board[row][col];
         if (target.given) return;
         if (target.value === EMPTY_CELL && target.notes.size === 0) return;
+        if (
+          useRunStore
+            .getState()
+            .levelState.frozenCells.includes(`${row},${col}`)
+        ) {
+          return;
+        }
 
         const newBoard = cloneBoardShallow(board);
         newBoard[row][col] = {

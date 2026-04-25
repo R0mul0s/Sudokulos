@@ -5,10 +5,13 @@
  * @author Roman Hlaváček
  * @created 2026-04-24
  */
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { NodeType, RelicId, RunNode } from '@/types/rpg';
 import { useRunStore } from '@/store/runStore';
 import { useGameStore } from '@/store/gameStore';
+import { useProfileStore } from '@/store/profileStore';
+import { RpgTutorialModal } from './RpgTutorialModal';
 
 const NODE_EMOJI: Record<NodeType, string> = {
   battle: '⚔️',
@@ -74,7 +77,20 @@ export function RunMapScreen({ onEnter, onAbandon }: RunMapScreenProps) {
   const run = useRunStore((s) => s.run);
   const abandonRun = useRunStore((s) => s.abandonRun);
   const abandonGame = useGameStore((s) => s.abandonGame);
+  const tutorialSeen = useProfileStore((s) => s.profile.tutorialSeen);
+  const markTutorialSeen = useProfileStore((s) => s.markTutorialSeen);
+  const [tutorialOpen, setTutorialOpen] = useState(false);
+
+  useEffect(() => {
+    if (!tutorialSeen) setTutorialOpen(true);
+  }, [tutorialSeen]);
+
   if (!run) return null;
+
+  const closeTutorial = () => {
+    setTutorialOpen(false);
+    markTutorialSeen();
+  };
 
   const { nodes, currentNodeIndex, player } = run;
   const currentNode = nodes[currentNodeIndex];
@@ -92,13 +108,24 @@ export function RunMapScreen({ onEnter, onAbandon }: RunMapScreenProps) {
         <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
           {t('rpg.mapTitle')}
         </h1>
-        <button
-          type="button"
-          onClick={handleAbandon}
-          className="text-sm text-red-600 underline-offset-4 hover:underline"
-        >
-          {t('rpg.abandon')}
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setTutorialOpen(true)}
+            className="rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700 transition hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
+            aria-label={t('rpg.tutorial.openLabel')}
+            title={t('rpg.tutorial.openLabel')}
+          >
+            ?
+          </button>
+          <button
+            type="button"
+            onClick={handleAbandon}
+            className="text-sm text-red-600 underline-offset-4 hover:underline"
+          >
+            {t('rpg.abandon')}
+          </button>
+        </div>
       </header>
 
       <section className="flex flex-col gap-2 rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-800">
@@ -185,6 +212,8 @@ export function RunMapScreen({ onEnter, onAbandon }: RunMapScreenProps) {
           )}
         </button>
       </section>
+
+      <RpgTutorialModal open={tutorialOpen} onClose={closeTutorial} />
     </div>
   );
 }

@@ -35,7 +35,7 @@ const NODE_BLUEPRINTS: NodeBlueprint[] = [
 
 export const RUN_LENGTH = NODE_BLUEPRINTS.length;
 
-const ENV_EFFECTS: EnvEffect[] = ['storm', 'light'];
+const ENV_EFFECTS: EnvEffect[] = ['storm', 'light', 'frost', 'dark'];
 
 /**
  * Vytvoří run mapu z fixních blueprints. Mystery a shop nody mají

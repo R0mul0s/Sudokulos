@@ -97,6 +97,8 @@ interface LevelState {
   pendingMystery: MysteryEvent | null;
   /** Nabídka v aktuálním shop uzlu (null mimo shop). */
   shopOffer: ShopItem[] | null;
+  /** Klíče (`row,col`) zamrzlých buněk pro env effect 'frost'; nelze je editovat. */
+  frozenCells: string[];
 }
 
 interface RunState {
@@ -139,6 +141,14 @@ interface RunActions {
    * Volá se z gameStore.startNewGame, idempotentní — aplikuje jen jednou per level.
    */
   applyEnvEffectOnLevelStart: () => void;
+  /**
+   * Frost env effect — vybere N náhodných prázdných buněk a zamrazí je.
+   * Volá hook useFrostEffect: na startu levelu i v 20 s intervalech.
+   */
+  freezeRandomCells: (
+    emptyCells: Array<[number, number]>,
+    count: number,
+  ) => void;
 }
 
 export type RunStore = RunState & RunActions;
@@ -150,6 +160,7 @@ const INITIAL_LEVEL_STATE: LevelState = {
   consumedLuckyCells: [],
   pendingMystery: null,
   shopOffer: null,
+  frozenCells: [],
 };
 
 const INITIAL_STATE: RunState = {
@@ -992,7 +1003,31 @@ export const useRunStore = create<RunStore>()(
             });
           }
         }
-        // 'storm' — žádná start-of-level akce, řeší se přes useStormEffect hook.
+        // 'storm', 'frost', 'dark' — řeší se přes dedikované hooks / Board overlay.
+      },
+
+      freezeRandomCells: (emptyCells, count) => {
+        const { run, levelState } = get();
+        if (!run) return;
+        if (emptyCells.length === 0) {
+          if (levelState.frozenCells.length === 0) return;
+          set({ levelState: { ...levelState, frozenCells: [] } });
+          return;
+        }
+        const positions = emptyCells.slice();
+        // Fisher-Yates pro deterministický výběr — RNG seedovaný z runu + nodeIndex + iterace.
+        const iteration = Math.floor(Date.now() / 20_000);
+        const rng = createRng(
+          run.seed + run.currentNodeIndex * 4297 + iteration,
+        );
+        for (let i = positions.length - 1; i > 0; i--) {
+          const j = Math.floor(rng() * (i + 1));
+          [positions[i], positions[j]] = [positions[j], positions[i]];
+        }
+        const picked = positions
+          .slice(0, Math.min(count, positions.length))
+          .map(([r, c]) => `${r},${c}`);
+        set({ levelState: { ...levelState, frozenCells: picked } });
       },
 
       activateBloodAltar: () => {

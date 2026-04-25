@@ -225,6 +225,14 @@
       "light": {
         "name": "Light",
         "desc": "Searing brightness — −1 HP at start, but fast bonus threshold extends by 30 s."
+      },
+      "frost": {
+        "name": "Frost",
+        "desc": "Two empty cells are frozen and cannot be edited. Selection rotates every 20 s."
+      },
+      "dark": {
+        "name": "Darkness",
+        "desc": "You only see the current 3×3 block around your selection. Other cells are dimmed."
       }
     },
     "powerUp": {
@@ -276,6 +284,44 @@
       "leave": "Leave shop",
       "potionHpTitle": "Life Potion",
       "potionHpDesc": "+1 HP instantly (up to max)."
+    },
+    "tutorial": {
+      "openLabel": "RPG mode guide",
+      "stepLabel": "Step {{current}} / {{total}}",
+      "skip": "Skip",
+      "prev": "Back",
+      "next": "Next",
+      "done": "Got it",
+      "steps": {
+        "welcome": {
+          "title": "Welcome to RPG mode",
+          "body": "You'll go through a series of 8 nodes — battles, mysteries, a shop and a final boss. Each run is one episode; death ends it, but earned souls stay with you."
+        },
+        "hp": {
+          "title": "Hit points (HP)",
+          "body": "Each puzzle mistake costs 1 HP. When HP reaches 0, the run ends. Restore HP with potions, rest at mystery nodes, or certain relics."
+        },
+        "lucky": {
+          "title": "Lucky cells ⭐",
+          "body": "At level start 3 cells get marked. The correct value rewards gold and mana, the wrong one costs double HP. Think before guessing."
+        },
+        "combo": {
+          "title": "Combo and chains 🔥",
+          "body": "Consecutive correct answers raise combo and grant gold bonuses. Completing an entire row, column or block in one move triggers a chain reaction with gold and mana bonuses."
+        },
+        "relics": {
+          "title": "Relics 🔮",
+          "body": "Passive bonuses you keep for the whole run. Collect them from rewards, mystery nodes and shops. They stack — strong combinations change the game."
+        },
+        "envEffects": {
+          "title": "Environmental effects 🌩️",
+          "body": "Elite and boss nodes have a random effect — storm erases notes, light drains HP, frost freezes cells, darkness hides the board. Adapt your strategy."
+        },
+        "souls": {
+          "title": "Souls 🪙",
+          "body": "You gain souls from every run (even losses). Spend them in the Souls shop on new classes and rare relics for the dropping pool of future runs."
+        }
+      }
     },
     "end": {
       "winTitle": "Victory!",

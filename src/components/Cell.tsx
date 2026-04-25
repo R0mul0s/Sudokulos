@@ -24,6 +24,10 @@ export interface CellProps {
   peekValue?: number | null;
   /** Krátká pop animace po správně vyplněné lucky cell. Předává se timestamp. */
   luckyPopAt?: number | null;
+  /** Frost env effect — buňka je zamrzlá, nelze editovat (ledový vzhled). */
+  isFrozen?: boolean;
+  /** Dark env effect — buňka mimo aktuální 3×3 blok, vizuálně ztmavená. */
+  isDimmed?: boolean;
   onClick: (row: number, col: number) => void;
 }
 
@@ -75,6 +79,8 @@ export const Cell = memo(function Cell({
   isLucky = false,
   peekValue = null,
   luckyPopAt = null,
+  isFrozen = false,
+  isDimmed = false,
   onClick,
 }: CellProps) {
   const hasValue = cell.value !== 0;
@@ -92,6 +98,7 @@ export const Cell = memo(function Cell({
         cellTextColor(cell.given, isError, hasValue),
         borderClasses(row, col),
         luckyPopAt !== null ? 'animate-lucky-pop' : '',
+        isDimmed ? 'opacity-25' : '',
       ].join(' ')}
       key={luckyPopAt ?? undefined}
       aria-label={`Buňka ${row + 1}, ${col + 1}`}
@@ -118,6 +125,14 @@ export const Cell = memo(function Cell({
           className="pointer-events-none absolute right-0.5 top-0 text-[10px] leading-none text-amber-500"
         >
           ⭐
+        </span>
+      )}
+      {isFrozen && !hasValue && (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 flex items-center justify-center bg-cyan-200/60 text-2xl dark:bg-cyan-300/30"
+        >
+          ❄️
         </span>
       )}
     </button>

@@ -52,6 +52,12 @@ export function Board() {
   const luckyCells = useRunStore((s) => s.run?.luckyCells ?? []);
   const consumedLucky = useRunStore((s) => s.levelState.consumedLuckyCells);
   const peek = useRunStore((s) => s.levelState.peek);
+  const frozenCells = useRunStore((s) => s.levelState.frozenCells);
+  const isDarkEffect = useRunStore((s) => {
+    if (!s.run) return false;
+    const node = s.run.nodes[s.run.currentNodeIndex];
+    return node?.envEffect === 'dark';
+  });
   const sharpEye = useRunStore((s) =>
     (s.run?.player.relics ?? []).some(
       (r) => r.id === 'sharp_eye' && !r.consumed,
@@ -78,6 +84,8 @@ export function Board() {
     for (const consumed of consumedLucky) set.delete(consumed);
     return set;
   }, [luckyCells, consumedLucky]);
+
+  const frozenSet = useMemo(() => new Set(frozenCells), [frozenCells]);
 
   if (!board) return null;
 
@@ -122,6 +130,16 @@ export function Board() {
             !lastFilled.isMistake
               ? lastFilled.at
               : null;
+          const isFrozen = frozenSet.has(`${rowIdx},${colIdx}`);
+          // Dark env effect: ztmavíme buňky mimo aktuální 3×3 blok kolem výběru.
+          // Bez výběru je celá deska ztmavená (vede uživatele k volbě).
+          const isDimmed =
+            isDarkEffect &&
+            (selected === null ||
+              Math.floor(rowIdx / BLOCK_SIZE) !==
+                Math.floor(selected.row / BLOCK_SIZE) ||
+              Math.floor(colIdx / BLOCK_SIZE) !==
+                Math.floor(selected.col / BLOCK_SIZE));
 
           return (
             <Cell
@@ -136,6 +154,8 @@ export function Board() {
               isLucky={isLucky}
               peekValue={peekValue}
               luckyPopAt={luckyPopAt}
+              isFrozen={isFrozen}
+              isDimmed={isDimmed}
               onClick={selectCell}
             />
           );
