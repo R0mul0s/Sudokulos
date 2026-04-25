@@ -12,7 +12,8 @@
  * @created 2026-04-25
  */
 import type { Difficulty, GameMode } from '@/types/game';
-import type { NodeType, RunNode } from '@/types/rpg';
+import type { EnvEffect, NodeType, RunNode } from '@/types/rpg';
+import type { Rng } from '../rng';
 
 interface NodeBlueprint {
   type: NodeType;
@@ -34,19 +35,28 @@ const NODE_BLUEPRINTS: NodeBlueprint[] = [
 
 export const RUN_LENGTH = NODE_BLUEPRINTS.length;
 
+const ENV_EFFECTS: EnvEffect[] = ['storm', 'light'];
+
 /**
  * Vytvoří run mapu z fixních blueprints. Mystery a shop nody mají
  * difficulty/mode pole z formálních důvodů (typu RunNode), ale jejich UI
- * neukazuje puzzle.
+ * neukazuje puzzle. Elite a boss uzly dostanou náhodný env effect.
  */
-export function buildRunNodes(): RunNode[] {
-  return NODE_BLUEPRINTS.map((bp, index) => ({
-    index,
-    type: bp.type,
-    difficulty: bp.difficulty,
-    mode: bp.mode,
-    completed: false,
-  }));
+export function buildRunNodes(rng?: Rng): RunNode[] {
+  return NODE_BLUEPRINTS.map((bp, index) => {
+    const node: RunNode = {
+      index,
+      type: bp.type,
+      difficulty: bp.difficulty,
+      mode: bp.mode,
+      completed: false,
+    };
+    if ((bp.type === 'elite' || bp.type === 'boss') && rng) {
+      const idx = Math.floor(rng() * ENV_EFFECTS.length);
+      node.envEffect = ENV_EFFECTS[idx];
+    }
+    return node;
+  });
 }
 
 /** True pokud daný typ uzlu spouští puzzle (battle/elite/boss). */

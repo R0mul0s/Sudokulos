@@ -10,6 +10,7 @@ import { useSettingsStore } from '@/store/settingsStore';
 import { useRunStore } from '@/store/runStore';
 import { useGameTimer } from '@/hooks/useGameTimer';
 import { useKeyboardControls } from '@/hooks/useKeyboardControls';
+import { useStormEffect } from '@/hooks/useStormEffect';
 import { Board } from './Board';
 import { Controls } from './Controls';
 import { NumberPad } from './NumberPad';
@@ -32,6 +33,7 @@ export function GameScreen() {
 
   useGameTimer();
   useKeyboardControls();
+  useStormEffect();
 
   const showCompleted = status === 'completed';
   const showFailed = status === 'failed';

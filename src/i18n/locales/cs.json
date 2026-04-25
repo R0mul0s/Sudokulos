@@ -217,6 +217,16 @@
       "action": "Oltář krve: −1 HP / +50 zlata"
     },
     "openMeta": "Souls shop — odemkni další třídy a relikvie",
+    "envEffect": {
+      "storm": {
+        "name": "Bouře",
+        "desc": "Každých 60 sekund vítr smaže náhodnou poznámku."
+      },
+      "light": {
+        "name": "Světlo",
+        "desc": "Spalující jas — −1 HP na startu, ale práh pro fast bonus se prodlouží o 30 s."
+      }
+    },
     "powerUp": {
       "peek": {
         "name": "Peek",

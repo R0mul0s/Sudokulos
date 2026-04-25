@@ -17,6 +17,7 @@ import { useSettingsStore } from '@/store/settingsStore';
 import { useRunStore } from '@/store/runStore';
 import { Cell } from './Cell';
 import { CageOverlay } from './killer/CageOverlay';
+import { ChainFlashOverlay } from './rpg/ChainFlashOverlay';
 
 function isPeer(
   row: number,
@@ -56,6 +57,8 @@ export function Board() {
       (r) => r.id === 'sharp_eye' && !r.consumed,
     ),
   );
+  const lastFilled = useGameStore((s) => s.lastFilled);
+  const lastChain = useGameStore((s) => s.lastChain);
 
   const conflictSet = useMemo(() => {
     if (!board) return new Set<string>();
@@ -111,6 +114,14 @@ export function Board() {
             peek && peek.row === rowIdx && peek.col === colIdx
               ? peek.value
               : null;
+          const luckyPopAt =
+            lastFilled &&
+            lastFilled.row === rowIdx &&
+            lastFilled.col === colIdx &&
+            lastFilled.isLucky &&
+            !lastFilled.isMistake
+              ? lastFilled.at
+              : null;
 
           return (
             <Cell
@@ -124,12 +135,14 @@ export function Board() {
               isError={isError}
               isLucky={isLucky}
               peekValue={peekValue}
+              luckyPopAt={luckyPopAt}
               onClick={selectCell}
             />
           );
         }),
       )}
       {mode === 'killer' && cages && <CageOverlay cages={cages} />}
+      {lastChain && <ChainFlashOverlay key={lastChain.at} chain={lastChain} />}
       <span className="sr-only">{`Deska ${BOARD_SIZE}×${BOARD_SIZE}`}</span>
     </div>
   );

@@ -217,6 +217,16 @@
       "action": "Blood Altar: −1 HP / +50 gold"
     },
     "openMeta": "Souls shop — unlock more classes and relics",
+    "envEffect": {
+      "storm": {
+        "name": "Storm",
+        "desc": "Every 60 seconds the wind erases a random note."
+      },
+      "light": {
+        "name": "Light",
+        "desc": "Searing brightness — −1 HP at start, but fast bonus threshold extends by 30 s."
+      }
+    },
     "powerUp": {
       "peek": {
         "name": "Peek",

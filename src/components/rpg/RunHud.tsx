@@ -6,10 +6,15 @@
  * @created 2026-04-24
  */
 import { useTranslation } from 'react-i18next';
-import type { RelicId } from '@/types/rpg';
+import type { EnvEffect, RelicId } from '@/types/rpg';
 import { useRunStore } from '@/store/runStore';
 import { triggerHaptic } from '@/game/haptics';
 import { PowerUpButton } from './PowerUpButton';
+
+const ENV_EFFECT_EMOJI: Record<EnvEffect, string> = {
+  storm: '🌩️',
+  light: '☀️',
+};
 
 function BloodAltarButton() {
   const { t } = useTranslation();
@@ -85,8 +90,19 @@ export function RunHud() {
             total: nodes.length,
           })}
         </span>
-        <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-semibold dark:bg-slate-700">
-          {t(`rpg.nodeType.${currentNode.type}`)}
+        <span className="flex items-center gap-1">
+          {currentNode.envEffect && (
+            <span
+              className="rounded-full bg-indigo-200 px-2 py-0.5 text-[10px] font-semibold text-indigo-900 dark:bg-indigo-500/30 dark:text-indigo-100"
+              title={t(`rpg.envEffect.${currentNode.envEffect}.desc`)}
+            >
+              {ENV_EFFECT_EMOJI[currentNode.envEffect]}{' '}
+              {t(`rpg.envEffect.${currentNode.envEffect}.name`)}
+            </span>
+          )}
+          <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-semibold dark:bg-slate-700">
+            {t(`rpg.nodeType.${currentNode.type}`)}
+          </span>
         </span>
       </div>
 
@@ -105,7 +121,10 @@ export function RunHud() {
             </span>
           )}
           {player.combo >= 2 && (
-            <span className="flex items-center gap-1 rounded-full bg-amber-200 px-2 py-0.5 text-amber-900 dark:bg-amber-500/30 dark:text-amber-200">
+            <span
+              key={player.combo}
+              className="animate-combo-pop flex items-center gap-1 rounded-full bg-amber-200 px-2 py-0.5 text-amber-900 dark:bg-amber-500/30 dark:text-amber-200"
+            >
               🔥 ×{player.combo}
             </span>
           )}

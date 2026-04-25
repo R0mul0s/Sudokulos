@@ -22,6 +22,8 @@ export interface CellProps {
   isLucky?: boolean;
   /** Vodoznak hodnoty z Peek power-upu (zobrazí se transparentně, neovlivňuje stav). */
   peekValue?: number | null;
+  /** Krátká pop animace po správně vyplněné lucky cell. Předává se timestamp. */
+  luckyPopAt?: number | null;
   onClick: (row: number, col: number) => void;
 }
 
@@ -72,6 +74,7 @@ export const Cell = memo(function Cell({
   isError,
   isLucky = false,
   peekValue = null,
+  luckyPopAt = null,
   onClick,
 }: CellProps) {
   const hasValue = cell.value !== 0;
@@ -88,7 +91,9 @@ export const Cell = memo(function Cell({
         cellBackground(isSelected, isPeer, isSameValue),
         cellTextColor(cell.given, isError, hasValue),
         borderClasses(row, col),
+        luckyPopAt !== null ? 'animate-lucky-pop' : '',
       ].join(' ')}
+      key={luckyPopAt ?? undefined}
       aria-label={`Buňka ${row + 1}, ${col + 1}`}
       aria-selected={isSelected}
     >

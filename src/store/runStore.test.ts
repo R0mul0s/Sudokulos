@@ -602,6 +602,63 @@ describe('runStore', () => {
     });
   });
 
+  describe('environmental effects', () => {
+    it('Light na startu levelu sníží HP o 1', () => {
+      useRunStore.getState().startRun('warrior', 1);
+      // Najdeme uzel s envEffect 'light' nebo si ho nastavíme manuálně
+      useRunStore.setState((state) => ({
+        run: state.run
+          ? {
+              ...state.run,
+              currentNodeIndex: 0,
+              nodes: state.run.nodes.map((n, i) =>
+                i === 0 ? { ...n, envEffect: 'light' as const } : n,
+              ),
+            }
+          : null,
+      }));
+      const hpBefore = useRunStore.getState().run!.player.hp;
+      useRunStore.getState().applyEnvEffectOnLevelStart();
+      expect(useRunStore.getState().run!.player.hp).toBe(hpBefore - 1);
+    });
+
+    it('Light HP penalty se nemůže zabít (clamp na 1)', () => {
+      useRunStore.getState().startRun('warrior', 1);
+      useRunStore.setState((state) => ({
+        run: state.run
+          ? {
+              ...state.run,
+              currentNodeIndex: 0,
+              player: { ...state.run.player, hp: 1 },
+              nodes: state.run.nodes.map((n, i) =>
+                i === 0 ? { ...n, envEffect: 'light' as const } : n,
+              ),
+            }
+          : null,
+      }));
+      useRunStore.getState().applyEnvEffectOnLevelStart();
+      expect(useRunStore.getState().run!.player.hp).toBe(1);
+    });
+
+    it('Storm na startu levelu nemodifikuje HP', () => {
+      useRunStore.getState().startRun('warrior', 1);
+      useRunStore.setState((state) => ({
+        run: state.run
+          ? {
+              ...state.run,
+              currentNodeIndex: 0,
+              nodes: state.run.nodes.map((n, i) =>
+                i === 0 ? { ...n, envEffect: 'storm' as const } : n,
+              ),
+            }
+          : null,
+      }));
+      const hpBefore = useRunStore.getState().run!.player.hp;
+      useRunStore.getState().applyEnvEffectOnLevelStart();
+      expect(useRunStore.getState().run!.player.hp).toBe(hpBefore);
+    });
+  });
+
   describe('lucky cells', () => {
     it('initLuckyCells vybere N pozic z dostupných prázdných', () => {
       useRunStore.getState().startRun('warrior', 99);

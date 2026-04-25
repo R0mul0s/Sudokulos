@@ -8,6 +8,13 @@ import type { Difficulty, GameMode } from './game';
 
 export type NodeType = 'battle' | 'elite' | 'mystery' | 'shop' | 'boss';
 
+/**
+ * Environmental effect aktivní během puzzle levelu.
+ * - storm: každých 60 s smaže náhodnou poznámku
+ * - light: při startu levelu −1 HP, ale fast-level threshold se prodlouží o 30 s
+ */
+export type EnvEffect = 'storm' | 'light';
+
 /** Jeden uzel v run mapě. */
 export interface RunNode {
   index: number;
@@ -15,6 +22,8 @@ export interface RunNode {
   difficulty: Difficulty;
   mode: GameMode;
   completed: boolean;
+  /** Volitelný environmentální efekt — nastaven jen na elite a boss uzlech. */
+  envEffect?: EnvEffect;
 }
 
 /** ID třídy postavy. */

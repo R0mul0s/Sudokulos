@@ -174,7 +174,7 @@ Nápady, které se vyhodnotí až po dokončení 0–6.
 
 Nový herní mód nad existujícím sudoku enginem. Hráč prochází **run** = sekvenci 5–7 puzzle úrovní rostoucí obtížnosti, sbírá relics a zlato, bojuje proti bossovi, umírá (permadeath) a nese si jen **souls** jako meta progression.
 
-**Stav:** 8.1 MVP ✅ · 8.2 Rozšíření ✅ (vlny A/B/C/D dokončené) · 8.3 Polish ⏳
+**Stav:** 8.1 MVP ✅ · 8.2 Rozšíření ✅ · 8.3 Polish 🚧 (animace + 2 env effects hotové, boss varianty + tutorial odložené)
 
 ### 8.1 Game loop — 4 zoomy
 
@@ -360,14 +360,24 @@ Rozdělené do 4 vln pro postupné iterace.
 
 Celkem: **15 relics** (5 common, 5 uncommon, 5 rare), **3 třídy**, **8 uzlů per run**, **182 testů**, build 106 kB gzipped.
 
-#### Fáze 8.3 — Polish 🎨
+#### Fáze 8.3 — Polish 🚧
 
-- [ ] Environmental effects (Bouře, Mráz, Temnota, Světlo) na elite/boss
-- [ ] Animace na chain reaction, combo milestones, lucky cell hit
-- [ ] Boss variants (diagonal sudoku, speciální killer)
-- [ ] Zvuková odezva (pokud přidáme audio assety)
-- [ ] Tutorial / onboarding první run
-- [ ] Vyladění obtížnostní křivky podle telemetrie (kolik % runs končí na který uzel)
+**Hotovo:**
+- ✅ CSS animace: `chain-flash` (pulz nad dokončenou skupinou), `lucky-pop` (drop-shadow + scale na lucky cell), `combo-pop` (scale combo counteru)
+- ✅ gameStore exportuje `lastFilled` a `lastChain` jako anim trigger; Cell respektuje `luckyPopAt` prop, Board renderuje `ChainFlashOverlay`
+- ✅ Environmental effects (omezeno na 2 typy):
+  - **Bouře** 🌩️ — `useStormEffect` hook, každých 60 s `gameStore.deleteRandomNote`
+  - **Světlo** ☀️ — `applyEnvEffectOnLevelStart` snižuje HP o 1 (clamp 1), `finishCurrentLevel` přidá +30 s k fast threshold
+- ✅ Random env effect přiřazen na elite a boss uzly v `buildRunNodes(rng)` přes seed
+- ✅ Badge env effectu v RunHud header
+- ✅ i18n + 3 nové testy. Celkem 185, build 107 kB gzipped.
+
+**Odloženo:**
+- ⏳ Mráz a Temnota (vyžadují víc UI úprav)
+- ⏳ Boss variants (diagonal sudoku, speciální killer s časovým limitem)
+- ⏳ Zvuková odezva (závisí na audio assetech)
+- ⏳ Tutorial / onboarding první run
+- ⏳ Vyladění obtížnostní křivky podle telemetrie
 
 ### 8.8 Závislosti a rizika
 

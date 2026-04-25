@@ -50,6 +50,24 @@ interface HistoryEntry {
   cells: Array<{ row: number; col: number; cell: Cell }>;
 }
 
+/** Snapshot poslední vyplněné buňky pro UI animace. */
+export interface LastFilled {
+  row: number;
+  col: number;
+  value: number;
+  isMistake: boolean;
+  isLucky: boolean;
+  at: number;
+}
+
+/** Snapshot dokončených skupin pro chain flash animaci. */
+export interface LastChain {
+  rows: number[];
+  cols: number[];
+  blocks: number[];
+  at: number;
+}
+
 interface GameStoreState {
   status: GameStatus;
   difficulty: Difficulty;
@@ -64,10 +82,16 @@ interface GameStoreState {
   mistakes: number;
   hintsUsed: number;
   history: HistoryEntry[];
+  /** Poslední vyplněná buňka pro UI animace; null mimo run či při startu. */
+  lastFilled: LastFilled | null;
+  /** Posledná chain reaction pro flash overlay. */
+  lastChain: LastChain | null;
 }
 
 interface GameStoreActions {
   startNewGame: (difficulty: Difficulty, mode?: GameMode) => void;
+  /** Storm env effect — smaže náhodnou poznámku z prázdné buňky. */
+  deleteRandomNote: () => void;
   returnToMenu: () => void;
   continueGame: () => void;
   abandonGame: () => void;
@@ -100,6 +124,8 @@ const INITIAL_STATE: GameStoreState = {
   mistakes: 0,
   hintsUsed: 0,
   history: [],
+  lastFilled: null,
+  lastChain: null,
 };
 
 /** Všechny peer pozice (stejný řádek, sloupec nebo blok), bez samotné buňky. */
@@ -165,25 +191,38 @@ function getGroupsFor(
   return [rowCells, colCells, blockCells];
 }
 
+interface NewlyCompletedGroups {
+  rows: number[];
+  cols: number[];
+  blocks: number[];
+}
+
 /**
- * Spočítá kolik skupin (řádek / sloupec / blok obsahující danou buňku) se
- * stalo nově kompletními přechodem z beforeGrid na afterGrid. 0-3.
+ * Identifikuje skupiny (řádek/sloupec/blok obsahující danou buňku), které se
+ * staly nově kompletními. Vrací jejich indexy pro chain flash overlay i count
+ * pro reward (count = celkový součet).
  */
-function countNewlyCompletedGroups(
+function newlyCompletedGroups(
   beforeGrid: Grid,
   afterGrid: Grid,
   row: number,
   col: number,
-): number {
+): NewlyCompletedGroups {
   const before = getGroupsFor(beforeGrid, row, col);
   const after = getGroupsFor(afterGrid, row, col);
-  let count = 0;
-  for (let i = 0; i < 3; i++) {
-    if (isGroupFilledUnique(after[i]) && !isGroupFilledUnique(before[i])) {
-      count++;
-    }
+  const result: NewlyCompletedGroups = { rows: [], cols: [], blocks: [] };
+  if (isGroupFilledUnique(after[0]) && !isGroupFilledUnique(before[0])) {
+    result.rows.push(row);
   }
-  return count;
+  if (isGroupFilledUnique(after[1]) && !isGroupFilledUnique(before[1])) {
+    result.cols.push(col);
+  }
+  if (isGroupFilledUnique(after[2]) && !isGroupFilledUnique(before[2])) {
+    const blockIdx =
+      Math.floor(row / BLOCK_SIZE) * BLOCK_SIZE + Math.floor(col / BLOCK_SIZE);
+    result.blocks.push(blockIdx);
+  }
+  return result;
 }
 
 /**
@@ -300,6 +339,7 @@ export const useGameStore = create<GameStore>()(
             history: [],
           });
           maybeInitLuckyCells(emptyBoard);
+          useRunStore.getState().applyEnvEffectOnLevelStart();
           return;
         }
 
@@ -320,6 +360,7 @@ export const useGameStore = create<GameStore>()(
           history: [],
         });
         maybeInitLuckyCells(newBoard);
+        useRunStore.getState().applyEnvEffectOnLevelStart();
       },
 
       returnToMenu: () => {
@@ -331,6 +372,31 @@ export const useGameStore = create<GameStore>()(
         } else {
           set({ status: 'menu' });
         }
+      },
+
+      deleteRandomNote: () => {
+        const { board, status } = get();
+        if (!board || status !== 'playing') return;
+        const cellsWithNotes: Array<{ row: number; col: number }> = [];
+        for (let r = 0; r < BOARD_SIZE; r++) {
+          for (let c = 0; c < BOARD_SIZE; c++) {
+            if (board[r][c].value === EMPTY_CELL && board[r][c].notes.size > 0) {
+              cellsWithNotes.push({ row: r, col: c });
+            }
+          }
+        }
+        if (cellsWithNotes.length === 0) return;
+        const target =
+          cellsWithNotes[Math.floor(Math.random() * cellsWithNotes.length)];
+        const cell = board[target.row][target.col];
+        const notesArray = Array.from(cell.notes);
+        const noteToRemove =
+          notesArray[Math.floor(Math.random() * notesArray.length)];
+        const newNotes = new Set(cell.notes);
+        newNotes.delete(noteToRemove);
+        const newBoard = cloneBoardShallow(board);
+        newBoard[target.row][target.col] = { ...cell, notes: newNotes };
+        set({ board: newBoard });
       },
 
       continueGame: () => {
@@ -421,18 +487,31 @@ export const useGameStore = create<GameStore>()(
         });
 
         if (runActive) {
+          const isLuckyCell =
+            useRunStore.getState().run?.luckyCells.includes(`${row},${col}`) ??
+            false;
+          set({
+            lastFilled: {
+              row,
+              col,
+              value,
+              isMistake,
+              isLucky: isLuckyCell,
+              at: Date.now(),
+            },
+          });
           if (isMistake) {
             useRunStore.getState().recordMistake();
             triggerHaptic('error');
           } else {
             const beforeGrid = boardToGrid(board);
             const afterGrid = boardToGrid(newBoard);
-            const chainCount = countNewlyCompletedGroups(
-              beforeGrid,
-              afterGrid,
-              row,
-              col,
-            );
+            const groups = newlyCompletedGroups(beforeGrid, afterGrid, row, col);
+            const chainCount =
+              groups.rows.length + groups.cols.length + groups.blocks.length;
+            if (chainCount > 0) {
+              set({ lastChain: { ...groups, at: Date.now() } });
+            }
             useRunStore.getState().recordCorrect(chainCount);
           }
           useRunStore.getState().recordLuckyHit(row, col, !isMistake);

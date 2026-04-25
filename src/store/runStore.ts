@@ -134,6 +134,11 @@ interface RunActions {
   leaveShopNode: () => void;
   /** Aktivuje Blood Altar relic (−1 HP za +50 gold). Vrací true pokud uspěl. */
   activateBloodAltar: () => boolean;
+  /**
+   * Aplikuje environmental effect při vstupu do nového puzzle levelu.
+   * Volá se z gameStore.startNewGame, idempotentní — aplikuje jen jednou per level.
+   */
+  applyEnvEffectOnLevelStart: () => void;
 }
 
 export type RunStore = RunState & RunActions;
@@ -395,9 +400,10 @@ export const useRunStore = create<RunStore>()(
           bestComboInRun: 0,
         };
         const player = applyOnRunStart(basePlayer, startingRelics);
+        const nodesRng = createRng(seed ^ 0x1f3d_5a7b);
         const run: ActiveRun = {
           seed,
-          nodes: buildRunNodes(),
+          nodes: buildRunNodes(nodesRng),
           currentNodeIndex: 0,
           player,
           pendingRewards: null,
@@ -555,6 +561,10 @@ export const useRunStore = create<RunStore>()(
               FAST_LEVEL_THRESHOLD_MS * def.fastLevelThresholdMultiplier,
             );
           }
+        }
+        // Light env effect prodlouží fast threshold o 30 s.
+        if (node.envEffect === 'light') {
+          fastThreshold += 30_000;
         }
         const fastBonus =
           elapsedMs < fastThreshold ? LEVEL_END_FAST_BONUS : 0;
@@ -963,6 +973,26 @@ export const useRunStore = create<RunStore>()(
           levelState: { ...levelState, shopOffer: newOffer },
         });
         return true;
+      },
+
+      applyEnvEffectOnLevelStart: () => {
+        const { run } = get();
+        if (!run) return;
+        const node = run.nodes[run.currentNodeIndex];
+        if (!node?.envEffect) return;
+        if (node.envEffect === 'light') {
+          // Jednorázová HP penalty na startu levelu, clampnutá na 1.
+          const nextHp = Math.max(1, run.player.hp - 1);
+          if (nextHp !== run.player.hp) {
+            set({
+              run: {
+                ...run,
+                player: { ...run.player, hp: nextHp },
+              },
+            });
+          }
+        }
+        // 'storm' — žádná start-of-level akce, řeší se přes useStormEffect hook.
       },
 
       activateBloodAltar: () => {
