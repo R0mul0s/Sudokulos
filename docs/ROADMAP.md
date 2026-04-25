@@ -170,9 +170,11 @@ Nápady, které se vyhodnotí až po dokončení 0–6.
 
 ---
 
-## Fáze 8 — RPG Roguelike mód ⏳
+## Fáze 8 — RPG Roguelike mód 🚧
 
 Nový herní mód nad existujícím sudoku enginem. Hráč prochází **run** = sekvenci 5–7 puzzle úrovní rostoucí obtížnosti, sbírá relics a zlato, bojuje proti bossovi, umírá (permadeath) a nese si jen **souls** jako meta progression.
+
+**Stav:** 8.1 MVP ✅ nasazené v produkci · 8.2 Rozšíření ⏳ · 8.3 Polish ⏳
 
 ### 8.1 Game loop — 4 zoomy
 
@@ -291,30 +293,40 @@ Souls v profilu jdou utratit:
 
 Postavíme ve 3 fázích, každou oddělitelně testovatelnou.
 
-#### Fáze 8.1 — MVP (prototyp) 🎯
+#### Fáze 8.1 — MVP (prototyp) ✅
 
-Nejdůležitější — ověřit, jestli je loop zábavný.
+- ✅ `types/rpg.ts` — PlayerState, ActiveRun, RunNode, RelicId, OwnedRelic, RewardOption, RunResult, PlayerProfile
+- ✅ `store/runStore.ts` — startRun, recordMistake, recordCorrect, finishCurrentLevel, chooseReward, abandonRun, acknowledgeResult; persist přes Zustand
+- ✅ `store/profileStore.ts` — souls, totalRuns, runsWon, bestRun (persist)
+- ✅ Rozšíření `gameStore`:
+  - V `setDigit` se v run módu volá `recordMistake`/`recordCorrect`/`finishCurrentLevel`
+  - `countNewlyCompletedGroups` detekuje 0–3 chain reaction (řádek/sloupec/blok nově dokončený tahem)
+  - V run módu se ignoruje klasický `maxMistakes` (HP řídí runStore)
+- ✅ Komponenty v [src/components/rpg/](../src/components/rpg/):
+  - `RunMapScreen` — vizualizace 6 uzlů (emoji + obtížnost), HP/gold/best combo header, tlačítka start/abandon
+  - `RunHud` — overlay v GameScreen: srdíčka, gold, combo counter (×N), relic ikony, node label
+  - `RewardScreen` — 3 karty (gold / potion / relic) s ikonou, názvem, popisem
+  - `RunEndScreen` — summary (souls earned, čas, best combo, gold, chyby, final HP) + collected relics
+- ✅ 5 core relics ([game/rpg/relics.ts](../src/game/rpg/relics.ts)) s hooks (onRunStart, onRevive, levelEndBonusGold):
+  - Amulet vhledu (common, 80g) — placeholder pro auto-notes UI
+  - Měděný prsten (common, 60g) — +10 gold per level
+  - Kožená rukavice (common, 70g) — +1 maxHp + heal
+  - Dračí šupina (uncommon, 140g) — první chyba v levelu odpuštěna
+  - Fénix (rare, 280g) — revive na 1 HP, jednorázový
+- ✅ 1 třída (Válečník, maxHp 3, maxMana 10)
+- ✅ Pouze battle uzly + 1 boss (5 battle: easy/easy/medium/medium/hard, boss: killer hard)
+- ✅ i18n (cs/en) — celá sekce `rpg.*` (nodeType, reward, relic name+desc, end summary, tlačítka)
+- ✅ Tlačítko 🎮 RPG Run v MenuScreen + zobrazení souls a počtu výher
+- ✅ Skrytí klasického mistakes counteru v Timer během run módu (HP řídí RunHud)
+- ✅ App FSM v [App.tsx](../src/App.tsx): priorita result > pendingRewards > active run > classic flow
+- ✅ 12 testů pro runStore (start, HP/combo/chain, dragon scale odpuštění, phoenix revive, reward flow, boss win); celkem 147 testů, build 98 kB gzipped
 
-- [ ] `types/rpg.ts` — PlayerState, Run, RunNode (jen battle typ)
-- [ ] `store/runStore.ts` — start/end run, progress mezi uzly, záznam puzzle výsledku
-- [ ] `store/profileStore.ts` — souls, základní statistiky (bez odemykání)
-- [ ] Rozšířit `gameStore` o run context — hp, combo, chain tracking
-  - HP decrement při chybě
-  - Combo counter v state
-  - Chain detection na každý setDigit
-- [ ] Nové obrazovky:
-  - `RunMapScreen` — vizualizace 7 uzlů, aktuální pozice, přechod na puzzle
-  - `RunHud` — overlay v GameScreen s HP, mana, combo, relics ikony
-  - `RewardScreen` — 3-volba dropu po dokončení levelu
-  - `RunEndScreen` — summary + souls
-- [ ] **5 core relics** (easy do implementace): Amulet vhledu, Měděný prsten, Kožená rukavice, Dračí šupina, Fénix
-- [ ] 1 třída (default: Válečník — maxHp 3, maxMana 10)
-- [ ] Pouze battle uzly (bez elite/shop/mystery)
-- [ ] Jeden boss na konci — killer puzzle s 10 min limitem
-- [ ] i18n (cs/en) pro RPG terminologii
-- [ ] Tlačítko v MenuScreen "🎮 RPG Run"
+**Drobné odchylky od původního plánu:**
+- Run má **6 uzlů** (5 battle + boss) místo 5 — pozvolnější rozjezd
+- Boss nemá časový limit 10 min — je to klasický killer hard puzzle, ohraničení je řešitelnost a HP
+- Souls formule: 5 attempt + 15 × dokončené uzly + 120 win (původně plánováno: úroveň × 10 + 80 boss + 150 win)
 
-**DoD:** lze odehrát kompletní 5-level run od začátku do smrti/vítězství, souls se ukládají, relics aplikují efekty.
+**DoD splněno:** kompletní run od startu do smrti/výhry funguje, souls se ukládají do profilu, relics aktivně mění gameplay (Dragon scale odpouští chybu, Phoenix oživuje, Měděný prsten dává gold bonus).
 
 #### Fáze 8.2 — Rozšíření 🔧
 
