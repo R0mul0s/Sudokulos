@@ -8,7 +8,34 @@
 import { useTranslation } from 'react-i18next';
 import type { RelicId } from '@/types/rpg';
 import { useRunStore } from '@/store/runStore';
+import { triggerHaptic } from '@/game/haptics';
 import { PowerUpButton } from './PowerUpButton';
+
+function BloodAltarButton() {
+  const { t } = useTranslation();
+  const hp = useRunStore((s) => s.run?.player.hp ?? 0);
+  const activate = useRunStore((s) => s.activateBloodAltar);
+  const disabled = hp <= 1;
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        if (activate()) triggerHaptic('error');
+      }}
+      disabled={disabled}
+      className={[
+        'flex items-center gap-2 rounded-xl px-3 py-1.5 text-sm font-semibold shadow-sm transition active:scale-95',
+        disabled
+          ? 'bg-slate-200 text-slate-400 dark:bg-slate-700 dark:text-slate-500'
+          : 'bg-red-300 text-red-900 hover:bg-red-400 dark:bg-red-500/30 dark:text-red-100',
+      ].join(' ')}
+      title={t('rpg.relic.blood_altar.desc')}
+      aria-label={t('rpg.bloodAltar.action')}
+    >
+      🩸 −1 HP / +50 💰
+    </button>
+  );
+}
 
 const RELIC_EMOJI: Record<RelicId, string> = {
   amulet_of_insight: '🔮',
@@ -21,6 +48,11 @@ const RELIC_EMOJI: Record<RelicId, string> = {
   flame_crown: '👑',
   spell_book: '📖',
   sharp_eye: '👁️',
+  stone_totem: '🪨',
+  shadow: '👤',
+  blood_altar: '🩸',
+  golden_pact: '💰',
+  time_dilation: '⏳',
 };
 
 function HeartRow({ hp, maxHp }: { hp: number; maxHp: number }) {
@@ -80,9 +112,15 @@ export function RunHud() {
         </div>
       </div>
 
-      {player.powerUp && (
-        <div className="flex justify-end">
-          <PowerUpButton />
+      {(player.powerUp ||
+        player.relics.some(
+          (r) => r.id === 'blood_altar' && !r.consumed,
+        )) && (
+        <div className="flex flex-wrap justify-end gap-2">
+          {player.powerUp && <PowerUpButton />}
+          {player.relics.some(
+            (r) => r.id === 'blood_altar' && !r.consumed,
+          ) && <BloodAltarButton />}
         </div>
       )}
 

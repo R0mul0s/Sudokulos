@@ -10,7 +10,7 @@ import { useTranslation } from 'react-i18next';
 import type { Difficulty, GameMode } from '@/types/game';
 import { DIFFICULTY_ORDER } from '@/game/difficulty';
 import { useGameStore } from '@/store/gameStore';
-import { useRunStore } from '@/store/runStore';
+import { AVAILABLE_CLASSES, useRunStore } from '@/store/runStore';
 import { useProfileStore } from '@/store/profileStore';
 import { InstallBanner } from './InstallBanner';
 import { LanguageSwitcher } from './LanguageSwitcher';
@@ -131,7 +131,7 @@ export function MenuScreen({ onOpenSettings, onOpenStats }: MenuScreenProps) {
         </div>
       </div>
 
-      <section className="flex flex-col gap-2 rounded-2xl border border-slate-300 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+      <section className="flex flex-col gap-3 rounded-2xl border border-slate-300 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800">
         <div className="flex items-center justify-between">
           <div>
             <div className="text-base font-semibold text-slate-900 dark:text-slate-100">
@@ -142,13 +142,29 @@ export function MenuScreen({ onOpenSettings, onOpenStats }: MenuScreenProps) {
             </div>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={() => startRun()}
-          className="rounded-xl bg-slate-900 px-4 py-2 text-sm text-white shadow-sm transition active:scale-[0.98] dark:bg-slate-100 dark:text-slate-900"
-        >
-          {t('rpg.startRun')}
-        </button>
+        <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          {t('rpg.chooseClass')}
+        </div>
+        <div className="flex flex-col gap-2">
+          {AVAILABLE_CLASSES.map((cls) => (
+            <button
+              key={cls}
+              type="button"
+              onClick={() => startRun(cls)}
+              className="flex items-center justify-between rounded-xl bg-slate-100 px-3 py-2 text-left text-sm transition active:scale-[0.99] dark:bg-slate-700"
+            >
+              <div>
+                <div className="font-semibold text-slate-900 dark:text-slate-100">
+                  {t(`rpg.class.${cls}.name`)}
+                </div>
+                <div className="text-xs text-slate-600 dark:text-slate-400">
+                  {t(`rpg.class.${cls}.desc`)}
+                </div>
+              </div>
+              <span className="text-xl">{t(`rpg.class.${cls}.icon`)}</span>
+            </button>
+          ))}
+        </div>
       </section>
 
       <InstallBanner />

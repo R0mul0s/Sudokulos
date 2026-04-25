@@ -44,12 +44,37 @@ const CHAIN_MANA_PER_GROUP = 5;
 /** Combo bonus gold per tah (od combo ≥ 2). */
 const COMBO_GOLD_PER_STEP = 3;
 
-const DEFAULT_CLASS_STATS: Record<
-  CharacterClass,
-  Pick<PlayerState, 'maxHp' | 'hp' | 'maxMana' | 'mana'>
-> = {
-  warrior: { maxHp: 3, hp: 3, maxMana: 10, mana: 0 },
+interface ClassBlueprint {
+  maxHp: number;
+  hp: number;
+  maxMana: number;
+  mana: number;
+  startingRelics: RelicId[];
+}
+
+const DEFAULT_CLASS_STATS: Record<CharacterClass, ClassBlueprint> = {
+  warrior: { maxHp: 3, hp: 3, maxMana: 10, mana: 0, startingRelics: [] },
+  mage: {
+    maxHp: 2,
+    hp: 2,
+    maxMana: 20,
+    mana: 10,
+    startingRelics: ['mana_vial'],
+  },
+  monk: {
+    maxHp: 4,
+    hp: 4,
+    maxMana: 5,
+    mana: 0,
+    startingRelics: ['dragon_scale'],
+  },
 };
+
+export const AVAILABLE_CLASSES: readonly CharacterClass[] = [
+  'warrior',
+  'mage',
+  'monk',
+] as const;
 
 interface PeekState {
   row: number;
@@ -107,6 +132,8 @@ interface RunActions {
   purchaseShopItem: (index: number) => boolean;
   /** Opustit shop a posunout se na další uzel. */
   leaveShopNode: () => void;
+  /** Aktivuje Blood Altar relic (−1 HP za +50 gold). Vrací true pokud uspěl. */
+  activateBloodAltar: () => boolean;
 }
 
 export type RunStore = RunState & RunActions;
@@ -136,6 +163,17 @@ const LUCKY_MANA_REWARD = 4;
 const LUCKY_PENALTY_HP = 1;
 /** Počet lucky cells na startu levelu. */
 const LUCKY_CELLS_PER_LEVEL = 3;
+
+/** Spočítá kumulativní multiplikátor zlata ze všech relics hráče. */
+function getGlobalGoldMultiplier(player: PlayerState): number {
+  let mult = 1;
+  for (const owned of player.relics) {
+    if (owned.consumed) continue;
+    const m = RELICS[owned.id]?.globalGoldMultiplier;
+    if (m) mult *= m;
+  }
+  return mult;
+}
 
 /**
  * Aplikuje "revive" hooks všech relics, pokud HP klesne na 0.
@@ -288,8 +326,10 @@ function buildRunResult(
  */
 function applyReward(player: PlayerState, reward: RewardOption): PlayerState {
   switch (reward.kind) {
-    case 'gold':
-      return { ...player, gold: player.gold + reward.amount };
+    case 'gold': {
+      const amount = Math.floor(reward.amount * getGlobalGoldMultiplier(player));
+      return { ...player, gold: player.gold + amount };
+    }
     case 'potion_hp':
       return {
         ...player,
@@ -320,17 +360,23 @@ export const useRunStore = create<RunStore>()(
       ...INITIAL_STATE,
 
       startRun: (characterClass = 'warrior', seed = Date.now()) => {
-        const baseStats = DEFAULT_CLASS_STATS[characterClass];
+        const blueprint = DEFAULT_CLASS_STATS[characterClass];
+        const startingRelics: OwnedRelic[] = blueprint.startingRelics.map(
+          (id) => ({ id, consumed: false }),
+        );
         const basePlayer: PlayerState = {
           characterClass,
-          ...baseStats,
+          maxHp: blueprint.maxHp,
+          hp: blueprint.hp,
+          maxMana: blueprint.maxMana,
+          mana: blueprint.mana,
           gold: 0,
-          relics: [],
+          relics: startingRelics,
           powerUp: null,
           combo: 0,
           bestComboInRun: 0,
         };
-        const player = applyOnRunStart(basePlayer, basePlayer.relics);
+        const player = applyOnRunStart(basePlayer, startingRelics);
         const run: ActiveRun = {
           seed,
           nodes: buildRunNodes(),
@@ -433,9 +479,24 @@ export const useRunStore = create<RunStore>()(
           manaGain += 1;
         }
         if (chainCount > 0) {
-          goldGain += CHAIN_GOLD_PER_GROUP * chainCount;
-          manaGain += CHAIN_MANA_PER_GROUP * chainCount;
+          let chainGoldMul = 1;
+          let chainManaMul = 1;
+          for (const owned of run.player.relics) {
+            if (owned.consumed) continue;
+            const def = RELICS[owned.id];
+            if (def?.chainGoldMultiplier) chainGoldMul *= def.chainGoldMultiplier;
+            if (def?.chainManaMultiplier) chainManaMul *= def.chainManaMultiplier;
+          }
+          goldGain += Math.floor(
+            CHAIN_GOLD_PER_GROUP * chainCount * chainGoldMul,
+          );
+          manaGain += Math.floor(
+            CHAIN_MANA_PER_GROUP * chainCount * chainManaMul,
+          );
         }
+
+        const goldMultiplier = getGlobalGoldMultiplier(run.player);
+        goldGain = Math.floor(goldGain * goldMultiplier);
 
         const nextPlayer: PlayerState = {
           ...run.player,
@@ -454,12 +515,11 @@ export const useRunStore = create<RunStore>()(
         const isElite = node.type === 'elite';
         const isBoss = node.type === 'boss';
 
-        // Gold bonus za dokončení levelu + případný bonus za rychlost + relic bonusy.
         let bonusGold = LEVEL_END_GOLD_BASE;
         if (isElite) bonusGold += 30;
         if (isBoss) bonusGold += 50;
-        let fastBonus =
-          elapsedMs < FAST_LEVEL_THRESHOLD_MS ? LEVEL_END_FAST_BONUS : 0;
+
+        let fastThreshold = FAST_LEVEL_THRESHOLD_MS;
         let fastMultiplier = 1;
         for (const owned of run.player.relics) {
           if (owned.consumed) continue;
@@ -471,8 +531,17 @@ export const useRunStore = create<RunStore>()(
               def.fastLevelGoldMultiplier,
             );
           }
+          if (def?.fastLevelThresholdMultiplier) {
+            fastThreshold = Math.max(
+              fastThreshold,
+              FAST_LEVEL_THRESHOLD_MS * def.fastLevelThresholdMultiplier,
+            );
+          }
         }
+        const fastBonus =
+          elapsedMs < fastThreshold ? LEVEL_END_FAST_BONUS : 0;
         bonusGold += Math.floor(fastBonus * fastMultiplier);
+        bonusGold = Math.floor(bonusGold * getGlobalGoldMultiplier(run.player));
 
         const updatedNodes = run.nodes.map((n, i) =>
           i === run.currentNodeIndex ? { ...n, completed: true } : n,
@@ -560,14 +629,21 @@ export const useRunStore = create<RunStore>()(
         const { run } = get();
         if (!run) return;
         const rng = createRng(run.seed + run.currentNodeIndex * 7919);
-        // Fisher-Yates pick N
         const positions = emptyCellPositions.slice();
         for (let i = positions.length - 1; i > 0; i--) {
           const j = Math.floor(rng() * (i + 1));
           [positions[i], positions[j]] = [positions[j], positions[i]];
         }
+        const bonusLucky = run.player.relics.reduce((sum, owned) => {
+          if (owned.consumed) return sum;
+          return sum + (RELICS[owned.id]?.bonusLuckyCells ?? 0);
+        }, 0);
+        const targetCount = Math.min(
+          LUCKY_CELLS_PER_LEVEL + bonusLucky,
+          positions.length,
+        );
         const picked = positions
-          .slice(0, Math.min(LUCKY_CELLS_PER_LEVEL, positions.length))
+          .slice(0, targetCount)
           .map(([r, c]) => `${r},${c}`);
         set({
           run: { ...run, luckyCells: picked },
@@ -585,9 +661,11 @@ export const useRunStore = create<RunStore>()(
         const consumed = [...levelState.consumedLuckyCells, key];
 
         if (correct) {
+          const goldMultiplier = getGlobalGoldMultiplier(run.player);
           const nextPlayer: PlayerState = {
             ...run.player,
-            gold: run.player.gold + LUCKY_GOLD_REWARD,
+            gold:
+              run.player.gold + Math.floor(LUCKY_GOLD_REWARD * goldMultiplier),
             mana: Math.min(
               run.player.maxMana,
               run.player.mana + LUCKY_MANA_REWARD,
@@ -719,12 +797,16 @@ export const useRunStore = create<RunStore>()(
                 hp: Math.min(run.player.maxHp, run.player.hp + event.hpHeal),
               };
               break;
-            case 'chest_gold':
+            case 'chest_gold': {
+              const amount = Math.floor(
+                event.amount * getGlobalGoldMultiplier(run.player),
+              );
               nextPlayer = {
                 ...run.player,
-                gold: run.player.gold + event.amount,
+                gold: run.player.gold + amount,
               };
               break;
+            }
             case 'chest_scroll': {
               const hasSpellBook = run.player.relics.some(
                 (r) => r.id === 'spell_book' && !r.consumed,
@@ -858,6 +940,28 @@ export const useRunStore = create<RunStore>()(
         set({
           run: { ...run, player: nextPlayer },
           levelState: { ...levelState, shopOffer: newOffer },
+        });
+        return true;
+      },
+
+      activateBloodAltar: () => {
+        const { run } = get();
+        if (!run) return false;
+        const hasIt = run.player.relics.some(
+          (r) => r.id === 'blood_altar' && !r.consumed,
+        );
+        if (!hasIt) return false;
+        if (run.player.hp <= 1) return false;
+        const goldGain = Math.floor(50 * getGlobalGoldMultiplier(run.player));
+        set({
+          run: {
+            ...run,
+            player: {
+              ...run.player,
+              hp: run.player.hp - 1,
+              gold: run.player.gold + goldGain,
+            },
+          },
         });
         return true;
       },

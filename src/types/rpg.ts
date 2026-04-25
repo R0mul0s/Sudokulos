@@ -18,7 +18,7 @@ export interface RunNode {
 }
 
 /** ID třídy postavy. */
-export type CharacterClass = 'warrior';
+export type CharacterClass = 'warrior' | 'mage' | 'monk';
 
 /** ID relicu (bude rozšiřováno s novými relicy). */
 export type RelicId =
@@ -31,7 +31,12 @@ export type RelicId =
   | 'mana_vial'
   | 'flame_crown'
   | 'spell_book'
-  | 'sharp_eye';
+  | 'sharp_eye'
+  | 'stone_totem'
+  | 'shadow'
+  | 'blood_altar'
+  | 'golden_pact'
+  | 'time_dilation';
 
 export type RelicRarity = 'common' | 'uncommon' | 'rare';
 

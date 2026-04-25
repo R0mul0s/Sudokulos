@@ -44,12 +44,20 @@ export interface RelicRuntime {
   ) => { player: PlayerState; relic: OwnedRelic } | null;
   /** Modifikuje gold odměnu z chain reaction (multiplikativně). */
   chainGoldMultiplier?: number;
+  /** Modifikuje mana odměnu z chain reaction. */
+  chainManaMultiplier?: number;
   /** Přidá fixní gold po dokončeném levelu. */
   levelEndBonusGold?: number;
   /** Procentuální gold bonus za rychlé dokončení (Flame Crown). */
   fastLevelGoldMultiplier?: number;
   /** Mana navíc na startu každého levelu. */
   manaPerLevelStart?: number;
+  /** Násobitel všech gold odměn ze hry (chain, lucky, level end, atd.). */
+  globalGoldMultiplier?: number;
+  /** Bonus k počtu lucky cells na startu levelu. */
+  bonusLuckyCells?: number;
+  /** Prodloužení fast-level prahu (násobí defaultní prah). */
+  fastLevelThresholdMultiplier?: number;
 }
 
 const AMULET_OF_INSIGHT: RelicRuntime = {
@@ -119,6 +127,37 @@ const SHARP_EYE: RelicRuntime = {
   // Peer highlight rozšířen o diagonálně sousedící buňky (interakce v Board).
 };
 
+const STONE_TOTEM: RelicRuntime = {
+  definition: { id: 'stone_totem', rarity: 'rare', price: 240 },
+  chainGoldMultiplier: 2,
+  chainManaMultiplier: 2,
+};
+
+const SHADOW: RelicRuntime = {
+  definition: { id: 'shadow', rarity: 'rare', price: 230 },
+  bonusLuckyCells: 2,
+};
+
+const BLOOD_ALTAR: RelicRuntime = {
+  definition: { id: 'blood_altar', rarity: 'rare', price: 220 },
+  // Aktivní přes runStore.activateBloodAltar — bez deklarativního hooku.
+};
+
+const GOLDEN_PACT: RelicRuntime = {
+  definition: { id: 'golden_pact', rarity: 'rare', price: 260 },
+  onRunStart: (player) => ({
+    ...player,
+    maxHp: Math.max(1, player.maxHp - 1),
+    hp: Math.min(player.hp, Math.max(1, player.maxHp - 1)),
+  }),
+  globalGoldMultiplier: 1.25,
+};
+
+const TIME_DILATION: RelicRuntime = {
+  definition: { id: 'time_dilation', rarity: 'rare', price: 200 },
+  fastLevelThresholdMultiplier: 2,
+};
+
 export const RELICS: Record<RelicId, RelicRuntime> = {
   amulet_of_insight: AMULET_OF_INSIGHT,
   copper_ring: COPPER_RING,
@@ -130,6 +169,11 @@ export const RELICS: Record<RelicId, RelicRuntime> = {
   flame_crown: FLAME_CROWN,
   spell_book: SPELL_BOOK,
   sharp_eye: SHARP_EYE,
+  stone_totem: STONE_TOTEM,
+  shadow: SHADOW,
+  blood_altar: BLOOD_ALTAR,
+  golden_pact: GOLDEN_PACT,
+  time_dilation: TIME_DILATION,
 };
 
 export const ALL_RELIC_IDS: RelicId[] = Object.keys(RELICS) as RelicId[];

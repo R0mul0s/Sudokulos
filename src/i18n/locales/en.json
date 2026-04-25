@@ -155,7 +155,48 @@
       "sharp_eye": {
         "name": "Sharp Eye",
         "desc": "Peer highlight extends to diagonally adjacent cells."
+      },
+      "stone_totem": {
+        "name": "Stone Totem",
+        "desc": "Chain reaction yields double gold and mana."
+      },
+      "shadow": {
+        "name": "Shadow",
+        "desc": "Each level starts with 5 lucky cells instead of 3."
+      },
+      "blood_altar": {
+        "name": "Blood Altar",
+        "desc": "Active: sacrifice 1 HP for 50 gold. Usable any time (HP > 1)."
+      },
+      "golden_pact": {
+        "name": "Golden Pact",
+        "desc": "+25% gold from all sources, but −1 max HP."
+      },
+      "time_dilation": {
+        "name": "Time Dilation",
+        "desc": "Fast-level threshold extends from 3 to 6 minutes."
       }
+    },
+    "chooseClass": "Choose class",
+    "class": {
+      "warrior": {
+        "name": "Warrior",
+        "desc": "Balanced — 3 HP, 10 mana, no starting relic.",
+        "icon": "⚔️"
+      },
+      "mage": {
+        "name": "Mage",
+        "desc": "Fragile but magical — 2 HP, 20 mana, starts with Mana Vial.",
+        "icon": "🧙"
+      },
+      "monk": {
+        "name": "Monk",
+        "desc": "Sturdy but mana-poor — 4 HP, 5 mana, starts with Dragon Scale.",
+        "icon": "🧘"
+      }
+    },
+    "bloodAltar": {
+      "action": "Blood Altar: −1 HP / +50 gold"
     },
     "powerUp": {
       "peek": {

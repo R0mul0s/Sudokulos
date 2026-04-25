@@ -25,6 +25,11 @@ const RELIC_EMOJI: Record<RelicId, string> = {
   flame_crown: '👑',
   spell_book: '📖',
   sharp_eye: '👁️',
+  stone_totem: '🪨',
+  shadow: '👤',
+  blood_altar: '🩸',
+  golden_pact: '💰',
+  time_dilation: '⏳',
 };
 
 interface ItemPresentation {

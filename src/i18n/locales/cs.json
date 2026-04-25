@@ -155,7 +155,48 @@
       "sharp_eye": {
         "name": "Oko ostrého zraku",
         "desc": "Zvýraznění sousedních buněk se rozšíří o diagonálně přiléhající."
+      },
+      "stone_totem": {
+        "name": "Kamenný totem",
+        "desc": "Chain reaction dává dvojnásobné zlato i manu."
+      },
+      "shadow": {
+        "name": "Stín",
+        "desc": "Na startu levelu se objeví 5 šťastných buněk místo 3."
+      },
+      "blood_altar": {
+        "name": "Oltář krve",
+        "desc": "Aktivní: obětuj 1 HP a získej 50 zlata. Použitelné kdykoli (pokud HP > 1)."
+      },
+      "golden_pact": {
+        "name": "Zlatý pakt",
+        "desc": "+25 % zlata ze všech zdrojů, ale −1 maximální HP."
+      },
+      "time_dilation": {
+        "name": "Časová dilatace",
+        "desc": "Práh pro fast-level bonus se prodlouží z 3 na 6 minut."
       }
+    },
+    "chooseClass": "Vyber třídu",
+    "class": {
+      "warrior": {
+        "name": "Válečník",
+        "desc": "Vyrovnaná třída — 3 HP, 10 many, žádný startovní relikt.",
+        "icon": "⚔️"
+      },
+      "mage": {
+        "name": "Mág",
+        "desc": "Křehká, ale magická — 2 HP, 20 many, startuje s Lahvičkou many.",
+        "icon": "🧙"
+      },
+      "monk": {
+        "name": "Mnich",
+        "desc": "Odolný, ale málo many — 4 HP, 5 many, startuje s Dračí šupinou.",
+        "icon": "🧘"
+      }
+    },
+    "bloodAltar": {
+      "action": "Oltář krve: −1 HP / +50 zlata"
     },
     "powerUp": {
       "peek": {

@@ -428,6 +428,132 @@ describe('runStore', () => {
     });
   });
 
+  describe('třídy a startovní relics', () => {
+    it('Mage začíná s 2 HP, 20 maxMana a Mana Vial v inventáři', () => {
+      useRunStore.getState().startRun('mage', 1);
+      const player = useRunStore.getState().run!.player;
+      expect(player.maxHp).toBe(2);
+      expect(player.maxMana).toBe(20);
+      expect(player.relics.some((r) => r.id === 'mana_vial')).toBe(true);
+    });
+
+    it('Monk začíná se 4 HP a Dragon Scale v inventáři', () => {
+      useRunStore.getState().startRun('monk', 1);
+      const player = useRunStore.getState().run!.player;
+      expect(player.maxHp).toBe(4);
+      expect(player.relics.some((r) => r.id === 'dragon_scale')).toBe(true);
+    });
+  });
+
+  describe('rare relics', () => {
+    it('Stone Totem zdvojnásobí chain gold a manu', () => {
+      useRunStore.getState().startRun('warrior', 1);
+      useRunStore.setState((state) => ({
+        run: state.run
+          ? {
+              ...state.run,
+              player: {
+                ...state.run.player,
+                relics: [{ id: 'stone_totem', consumed: false }],
+              },
+            }
+          : null,
+      }));
+      const before = useRunStore.getState().run!.player.gold;
+      useRunStore.getState().recordCorrect(1);
+      const after = useRunStore.getState().run!.player.gold;
+      // Bez stone totem by chain dal 25 gold; s ním 50.
+      expect(after - before).toBeGreaterThanOrEqual(50);
+    });
+
+    it('Shadow dá 5 lucky cells místo 3', () => {
+      useRunStore.getState().startRun('warrior', 1);
+      useRunStore.setState((state) => ({
+        run: state.run
+          ? {
+              ...state.run,
+              player: {
+                ...state.run.player,
+                relics: [{ id: 'shadow', consumed: false }],
+              },
+            }
+          : null,
+      }));
+      const empty: Array<[number, number]> = [];
+      for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) empty.push([r, c]);
+      useRunStore.getState().initLuckyCells(empty);
+      expect(useRunStore.getState().run!.luckyCells).toHaveLength(5);
+    });
+
+    it('Blood Altar tlačítko: −1 HP a +50 gold', () => {
+      useRunStore.getState().startRun('warrior', 1);
+      useRunStore.setState((state) => ({
+        run: state.run
+          ? {
+              ...state.run,
+              player: {
+                ...state.run.player,
+                relics: [{ id: 'blood_altar', consumed: false }],
+                hp: 3,
+                gold: 0,
+              },
+            }
+          : null,
+      }));
+      const ok = useRunStore.getState().activateBloodAltar();
+      expect(ok).toBe(true);
+      const player = useRunStore.getState().run!.player;
+      expect(player.hp).toBe(2);
+      expect(player.gold).toBe(50);
+    });
+
+    it('Blood Altar nefunguje při HP = 1', () => {
+      useRunStore.getState().startRun('warrior', 1);
+      useRunStore.setState((state) => ({
+        run: state.run
+          ? {
+              ...state.run,
+              player: {
+                ...state.run.player,
+                relics: [{ id: 'blood_altar', consumed: false }],
+                hp: 1,
+              },
+            }
+          : null,
+      }));
+      expect(useRunStore.getState().activateBloodAltar()).toBe(false);
+    });
+
+    it('Golden Pact: −1 maxHp ale +25 % gold ze všech zdrojů', () => {
+      useRunStore.getState().startRun('warrior', 1);
+      // Aplikujeme golden_pact ručně přes startovní state
+      useRunStore.setState((state) => {
+        if (!state.run) return state;
+        const newPlayer = {
+          ...state.run.player,
+          maxHp: state.run.player.maxHp - 1,
+          hp: Math.min(state.run.player.hp, state.run.player.maxHp - 1),
+          relics: [{ id: 'golden_pact' as const, consumed: false }],
+        };
+        return { run: { ...state.run, player: newPlayer } };
+      });
+      expect(useRunStore.getState().run!.player.maxHp).toBe(2);
+      // 50 gold reward * 1.25 = 62
+      const before = useRunStore.getState().run!.player.gold;
+      useRunStore.setState((state) => ({
+        run: state.run
+          ? {
+              ...state.run,
+              pendingRewards: [{ kind: 'gold', amount: 100 }],
+            }
+          : null,
+      }));
+      useRunStore.getState().chooseReward(0);
+      // applyReward gold = 100 * 1.25 = 125
+      expect(useRunStore.getState().run!.player.gold).toBe(before + 125);
+    });
+  });
+
   describe('lucky cells', () => {
     it('initLuckyCells vybere N pozic z dostupných prázdných', () => {
       useRunStore.getState().startRun('warrior', 99);
