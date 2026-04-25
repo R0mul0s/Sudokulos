@@ -10,6 +10,7 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import type {
   ActiveRun,
   CharacterClass,
+  MysteryEvent,
   OwnedRelic,
   PlayerState,
   PowerUpId,
@@ -17,6 +18,7 @@ import type {
   RewardOption,
   RunNode,
   RunResult,
+  ShopItem,
 } from '@/types/rpg';
 import { ALL_RELIC_IDS, applyOnRunStart, RELICS } from '@/game/rpg/relics';
 import { DROPPABLE_POWER_UP_IDS } from '@/game/rpg/powerUps';
@@ -66,6 +68,10 @@ interface LevelState {
   peek: PeekState | null;
   /** Souls bonus a HP penalty za lucky cells, které byly v levelu zatím vyřešené. */
   consumedLuckyCells: string[];
+  /** Aktivní mystery událost čekající na rozhodnutí (null mimo mystery uzel). */
+  pendingMystery: MysteryEvent | null;
+  /** Nabídka v aktuálním shop uzlu (null mimo shop). */
+  shopOffer: ShopItem[] | null;
 }
 
 interface RunState {
@@ -91,6 +97,16 @@ interface RunActions {
   activatePeek: (row: number, col: number, correctValue: number) => boolean;
   /** Aktivuje Shield. Vrací true pokud uspěl. */
   activateShield: () => boolean;
+  /** Vstup do mystery uzlu — vygeneruje událost. */
+  enterMysteryNode: () => void;
+  /** Aplikuje mystery rozhodnutí (accept = aplikovat efekt) a posune na další uzel. */
+  resolveMysteryNode: (accept: boolean) => void;
+  /** Vstup do shop uzlu — vygeneruje nabídku. */
+  enterShopNode: () => void;
+  /** Koupit položku ze shop offer (idx). Pokud má hráč gold, odečte a aplikuje. */
+  purchaseShopItem: (index: number) => boolean;
+  /** Opustit shop a posunout se na další uzel. */
+  leaveShopNode: () => void;
 }
 
 export type RunStore = RunState & RunActions;
@@ -100,6 +116,8 @@ const INITIAL_LEVEL_STATE: LevelState = {
   shieldActive: false,
   peek: null,
   consumedLuckyCells: [],
+  pendingMystery: null,
+  shopOffer: null,
 };
 
 const INITIAL_STATE: RunState = {
@@ -140,13 +158,27 @@ function tryRevive(
   return null;
 }
 
-/** Vygeneruje 3 náhodné reward options. */
-function generateRewards(player: PlayerState, rng: Rng): RewardOption[] {
+/**
+ * Vygeneruje 3 náhodné reward options.
+ * Pro elite uzly garantuje aspoň jeden relic (pokud je nějaký dostupný).
+ */
+function generateRewards(
+  player: PlayerState,
+  rng: Rng,
+  forceRelic = false,
+): RewardOption[] {
   const available = ALL_RELIC_IDS.filter(
     (id) => !player.relics.some((r) => r.id === id),
   );
   const options: RewardOption[] = [];
-  for (let i = 0; i < 3; i++) {
+
+  if (forceRelic && available.length > 0) {
+    const idx = Math.floor(rng() * available.length);
+    const relicId = available.splice(idx, 1)[0] as RelicId;
+    options.push({ kind: 'relic', relicId });
+  }
+
+  while (options.length < 3) {
     const roll = rng();
     if (roll < 0.4 && available.length > 0) {
       const idx = Math.floor(rng() * available.length);
@@ -170,6 +202,60 @@ function generateRewards(player: PlayerState, rng: Rng): RewardOption[] {
     options.push({ kind: 'potion_hp', amount: 1 });
   }
   return options;
+}
+
+/** Vygeneruje mystery událost — vážené losování ze 4 typů. */
+function generateMysteryEvent(player: PlayerState, rng: Rng): MysteryEvent {
+  const available = ALL_RELIC_IDS.filter(
+    (id) => !player.relics.some((r) => r.id === id),
+  );
+  const roll = rng();
+  if (roll < 0.3 && available.length > 0) {
+    const idx = Math.floor(rng() * available.length);
+    return { kind: 'altar', relicId: available[idx] as RelicId, hpCost: 1 };
+  }
+  if (roll < 0.55) {
+    return { kind: 'rest', hpHeal: 2 };
+  }
+  if (roll < 0.85) {
+    const amount = 50 + Math.floor(rng() * 60);
+    return { kind: 'chest_gold', amount };
+  }
+  const powerUpIdx = Math.floor(rng() * DROPPABLE_POWER_UP_IDS.length);
+  return {
+    kind: 'chest_scroll',
+    powerUpId: DROPPABLE_POWER_UP_IDS[powerUpIdx] as PowerUpId,
+  };
+}
+
+/** Vygeneruje shop nabídku — 2 relics, 1 potion, 1 scroll. */
+function generateShopOffer(player: PlayerState, rng: Rng): ShopItem[] {
+  const items: ShopItem[] = [];
+  const availableRelics = ALL_RELIC_IDS.filter(
+    (id) => !player.relics.some((r) => r.id === id),
+  );
+  // Fisher-Yates shuffle pro výběr až 2 relics
+  for (let i = availableRelics.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [availableRelics[i], availableRelics[j]] = [
+      availableRelics[j],
+      availableRelics[i],
+    ];
+  }
+  for (const id of availableRelics.slice(0, 2)) {
+    items.push({
+      kind: 'relic',
+      relicId: id,
+      price: RELICS[id].definition.price,
+    });
+  }
+  items.push({ kind: 'potion_hp', price: 50 });
+  const puId =
+    DROPPABLE_POWER_UP_IDS[
+      Math.floor(rng() * DROPPABLE_POWER_UP_IDS.length)
+    ];
+  items.push({ kind: 'power_up', powerUpId: puId as PowerUpId, price: 60 });
+  return items;
 }
 
 /** Spočítá výsledek runu (úspěch / smrt) pro uložení do profile. */
@@ -364,9 +450,14 @@ export const useRunStore = create<RunStore>()(
       finishCurrentLevel: (elapsedMs) => {
         const { run } = get();
         if (!run) return;
+        const node = run.nodes[run.currentNodeIndex];
+        const isElite = node.type === 'elite';
+        const isBoss = node.type === 'boss';
 
         // Gold bonus za dokončení levelu + případný bonus za rychlost + relic bonusy.
         let bonusGold = LEVEL_END_GOLD_BASE;
+        if (isElite) bonusGold += 30;
+        if (isBoss) bonusGold += 50;
         let fastBonus =
           elapsedMs < FAST_LEVEL_THRESHOLD_MS ? LEVEL_END_FAST_BONUS : 0;
         let fastMultiplier = 1;
@@ -387,7 +478,7 @@ export const useRunStore = create<RunStore>()(
           i === run.currentNodeIndex ? { ...n, completed: true } : n,
         );
         const rng = createRng(run.seed + run.currentNodeIndex + 1);
-        const pendingRewards = generateRewards(run.player, rng);
+        const pendingRewards = generateRewards(run.player, rng, isElite);
         const nextPlayer: PlayerState = {
           ...run.player,
           gold: run.player.gold + bonusGold,
@@ -588,6 +679,216 @@ export const useRunStore = create<RunStore>()(
           levelState: { ...levelState, shieldActive: true },
         });
         return true;
+      },
+
+      enterMysteryNode: () => {
+        const { run, levelState } = get();
+        if (!run) return;
+        const node = run.nodes[run.currentNodeIndex];
+        if (node.type !== 'mystery' || levelState.pendingMystery) return;
+        const rng = createRng(run.seed + run.currentNodeIndex * 6151);
+        const event = generateMysteryEvent(run.player, rng);
+        set({ levelState: { ...levelState, pendingMystery: event } });
+      },
+
+      resolveMysteryNode: (accept) => {
+        const { run, levelState } = get();
+        if (!run || !levelState.pendingMystery) return;
+        const event = levelState.pendingMystery;
+        let nextPlayer: PlayerState = run.player;
+
+        if (accept) {
+          switch (event.kind) {
+            case 'altar': {
+              const newRelic: OwnedRelic = {
+                id: event.relicId,
+                consumed: false,
+              };
+              const hook = RELICS[event.relicId]?.onRunStart;
+              const afterHook = hook ? hook(run.player) : run.player;
+              nextPlayer = {
+                ...afterHook,
+                hp: afterHook.hp - event.hpCost,
+                relics: [...afterHook.relics, newRelic],
+              };
+              break;
+            }
+            case 'rest':
+              nextPlayer = {
+                ...run.player,
+                hp: Math.min(run.player.maxHp, run.player.hp + event.hpHeal),
+              };
+              break;
+            case 'chest_gold':
+              nextPlayer = {
+                ...run.player,
+                gold: run.player.gold + event.amount,
+              };
+              break;
+            case 'chest_scroll': {
+              const hasSpellBook = run.player.relics.some(
+                (r) => r.id === 'spell_book' && !r.consumed,
+              );
+              nextPlayer = {
+                ...run.player,
+                powerUp: {
+                  id: event.powerUpId,
+                  charges: hasSpellBook ? 2 : 1,
+                },
+              };
+              break;
+            }
+          }
+        }
+
+        // HP=0 z altaru — pokus o revive, jinak konec runu.
+        if (nextPlayer.hp <= 0) {
+          const revived = tryRevive(nextPlayer);
+          if (revived) {
+            nextPlayer = revived.player;
+          } else {
+            const updatedNodes = run.nodes.map((n, i) =>
+              i === run.currentNodeIndex ? { ...n, completed: true } : n,
+            );
+            const result = buildRunResult(
+              { ...run, player: nextPlayer, nodes: updatedNodes },
+              false,
+              run.currentNodeIndex,
+            );
+            useProfileStore.getState().recordRunResult(result);
+            set({
+              run: null,
+              result,
+              levelState: INITIAL_LEVEL_STATE,
+            });
+            return;
+          }
+        }
+
+        const updatedNodes = run.nodes.map((n, i) =>
+          i === run.currentNodeIndex ? { ...n, completed: true } : n,
+        );
+        const nextNodeIndex = run.currentNodeIndex + 1;
+
+        if (nextNodeIndex >= RUN_LENGTH) {
+          const finalRun = {
+            ...run,
+            player: nextPlayer,
+            nodes: updatedNodes,
+          };
+          const result = buildRunResult(finalRun, true, RUN_LENGTH);
+          useProfileStore.getState().recordRunResult(result);
+          set({
+            run: null,
+            result,
+            levelState: INITIAL_LEVEL_STATE,
+          });
+          return;
+        }
+
+        set({
+          run: {
+            ...run,
+            nodes: updatedNodes,
+            player: nextPlayer,
+            currentNodeIndex: nextNodeIndex,
+            luckyCells: [],
+          },
+          levelState: INITIAL_LEVEL_STATE,
+        });
+      },
+
+      enterShopNode: () => {
+        const { run, levelState } = get();
+        if (!run) return;
+        const node = run.nodes[run.currentNodeIndex];
+        if (node.type !== 'shop' || levelState.shopOffer) return;
+        const rng = createRng(run.seed + run.currentNodeIndex * 5413);
+        const offer = generateShopOffer(run.player, rng);
+        set({ levelState: { ...levelState, shopOffer: offer } });
+      },
+
+      purchaseShopItem: (index) => {
+        const { run, levelState } = get();
+        if (!run || !levelState.shopOffer) return false;
+        const item = levelState.shopOffer[index];
+        if (!item) return false;
+        if (run.player.gold < item.price) return false;
+
+        let nextPlayer: PlayerState = {
+          ...run.player,
+          gold: run.player.gold - item.price,
+        };
+        switch (item.kind) {
+          case 'relic': {
+            const newRelic: OwnedRelic = {
+              id: item.relicId,
+              consumed: false,
+            };
+            const hook = RELICS[item.relicId]?.onRunStart;
+            nextPlayer = hook ? hook(nextPlayer) : nextPlayer;
+            nextPlayer = {
+              ...nextPlayer,
+              relics: [...nextPlayer.relics, newRelic],
+            };
+            break;
+          }
+          case 'potion_hp':
+            nextPlayer = {
+              ...nextPlayer,
+              hp: Math.min(nextPlayer.maxHp, nextPlayer.hp + 1),
+            };
+            break;
+          case 'power_up': {
+            const hasSpellBook = nextPlayer.relics.some(
+              (r) => r.id === 'spell_book' && !r.consumed,
+            );
+            nextPlayer = {
+              ...nextPlayer,
+              powerUp: {
+                id: item.powerUpId,
+                charges: hasSpellBook ? 2 : 1,
+              },
+            };
+            break;
+          }
+        }
+
+        const newOffer = levelState.shopOffer.filter((_, i) => i !== index);
+        set({
+          run: { ...run, player: nextPlayer },
+          levelState: { ...levelState, shopOffer: newOffer },
+        });
+        return true;
+      },
+
+      leaveShopNode: () => {
+        const { run } = get();
+        if (!run) return;
+        const updatedNodes = run.nodes.map((n, i) =>
+          i === run.currentNodeIndex ? { ...n, completed: true } : n,
+        );
+        const nextNodeIndex = run.currentNodeIndex + 1;
+        if (nextNodeIndex >= RUN_LENGTH) {
+          const finalRun = { ...run, nodes: updatedNodes };
+          const result = buildRunResult(finalRun, true, RUN_LENGTH);
+          useProfileStore.getState().recordRunResult(result);
+          set({
+            run: null,
+            result,
+            levelState: INITIAL_LEVEL_STATE,
+          });
+          return;
+        }
+        set({
+          run: {
+            ...run,
+            nodes: updatedNodes,
+            currentNodeIndex: nextNodeIndex,
+            luckyCells: [],
+          },
+          levelState: INITIAL_LEVEL_STATE,
+        });
       },
     }),
     {

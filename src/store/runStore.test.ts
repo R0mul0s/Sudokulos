@@ -21,6 +21,8 @@ describe('runStore', () => {
         shieldActive: false,
         peek: null,
         consumedLuckyCells: [],
+        pendingMystery: null,
+        shopOffer: null,
       },
     });
     useProfileStore.getState().resetProfile();
@@ -281,6 +283,148 @@ describe('runStore', () => {
         id: 'shield',
         charges: 2,
       });
+    });
+  });
+
+  describe('mystery uzly', () => {
+    it('enterMysteryNode na mystery uzlu vygeneruje událost', () => {
+      useRunStore.getState().startRun('warrior', 1);
+      // Najdi mystery uzel index a posuň se tam
+      const mysteryIdx = useRunStore
+        .getState()
+        .run!.nodes.findIndex((n) => n.type === 'mystery');
+      expect(mysteryIdx).toBeGreaterThanOrEqual(0);
+      useRunStore.setState((state) => ({
+        run: state.run
+          ? { ...state.run, currentNodeIndex: mysteryIdx }
+          : null,
+      }));
+      useRunStore.getState().enterMysteryNode();
+      expect(useRunStore.getState().levelState.pendingMystery).not.toBeNull();
+    });
+
+    it('resolveMysteryNode (rest, accept) vyléčí HP a postoupí', () => {
+      useRunStore.getState().startRun('warrior', 1);
+      const mysteryIdx = useRunStore
+        .getState()
+        .run!.nodes.findIndex((n) => n.type === 'mystery');
+      useRunStore.setState((state) => ({
+        run: state.run
+          ? {
+              ...state.run,
+              currentNodeIndex: mysteryIdx,
+              player: { ...state.run.player, hp: 1 },
+            }
+          : null,
+        levelState: {
+          ...state.levelState,
+          pendingMystery: { kind: 'rest', hpHeal: 2 },
+        },
+      }));
+      useRunStore.getState().resolveMysteryNode(true);
+      expect(useRunStore.getState().run!.player.hp).toBe(3);
+      expect(useRunStore.getState().run!.currentNodeIndex).toBe(mysteryIdx + 1);
+      expect(useRunStore.getState().levelState.pendingMystery).toBeNull();
+    });
+
+    it('resolveMysteryNode (skip) postoupí bez efektu', () => {
+      useRunStore.getState().startRun('warrior', 1);
+      useRunStore.setState((state) => ({
+        levelState: {
+          ...state.levelState,
+          pendingMystery: { kind: 'chest_gold', amount: 100 },
+        },
+      }));
+      const goldBefore = useRunStore.getState().run!.player.gold;
+      useRunStore.getState().resolveMysteryNode(false);
+      expect(useRunStore.getState().run!.player.gold).toBe(goldBefore);
+    });
+  });
+
+  describe('shop uzly', () => {
+    it('enterShopNode vygeneruje nabídku', () => {
+      useRunStore.getState().startRun('warrior', 1);
+      const shopIdx = useRunStore
+        .getState()
+        .run!.nodes.findIndex((n) => n.type === 'shop');
+      useRunStore.setState((state) => ({
+        run: state.run
+          ? { ...state.run, currentNodeIndex: shopIdx }
+          : null,
+      }));
+      useRunStore.getState().enterShopNode();
+      const offer = useRunStore.getState().levelState.shopOffer;
+      expect(offer).not.toBeNull();
+      expect(offer!.length).toBeGreaterThan(0);
+    });
+
+    it('purchaseShopItem odečte gold a aplikuje efekt', () => {
+      useRunStore.getState().startRun('warrior', 1);
+      useRunStore.setState((state) => ({
+        run: state.run
+          ? {
+              ...state.run,
+              player: { ...state.run.player, gold: 200, hp: 1 },
+            }
+          : null,
+        levelState: {
+          ...state.levelState,
+          shopOffer: [{ kind: 'potion_hp', price: 50 }],
+        },
+      }));
+      const ok = useRunStore.getState().purchaseShopItem(0);
+      expect(ok).toBe(true);
+      expect(useRunStore.getState().run!.player.gold).toBe(150);
+      expect(useRunStore.getState().run!.player.hp).toBe(2);
+      expect(useRunStore.getState().levelState.shopOffer).toHaveLength(0);
+    });
+
+    it('purchaseShopItem bez dostatečného gold vrátí false', () => {
+      useRunStore.getState().startRun('warrior', 1);
+      useRunStore.setState((state) => ({
+        run: state.run
+          ? { ...state.run, player: { ...state.run.player, gold: 10 } }
+          : null,
+        levelState: {
+          ...state.levelState,
+          shopOffer: [{ kind: 'potion_hp', price: 50 }],
+        },
+      }));
+      const ok = useRunStore.getState().purchaseShopItem(0);
+      expect(ok).toBe(false);
+      expect(useRunStore.getState().run!.player.gold).toBe(10);
+    });
+
+    it('leaveShopNode posune se na další uzel', () => {
+      useRunStore.getState().startRun('warrior', 1);
+      const shopIdx = useRunStore
+        .getState()
+        .run!.nodes.findIndex((n) => n.type === 'shop');
+      useRunStore.setState((state) => ({
+        run: state.run
+          ? { ...state.run, currentNodeIndex: shopIdx }
+          : null,
+      }));
+      useRunStore.getState().leaveShopNode();
+      expect(useRunStore.getState().run!.currentNodeIndex).toBe(shopIdx + 1);
+    });
+  });
+
+  describe('elite reward', () => {
+    it('finishCurrentLevel na elite uzlu garantuje aspoň jeden relic v rewardu', () => {
+      useRunStore.getState().startRun('warrior', 1);
+      const eliteIdx = useRunStore
+        .getState()
+        .run!.nodes.findIndex((n) => n.type === 'elite');
+      useRunStore.setState((state) => ({
+        run: state.run
+          ? { ...state.run, currentNodeIndex: eliteIdx }
+          : null,
+      }));
+      useRunStore.getState().finishCurrentLevel(60_000);
+      const rewards = useRunStore.getState().run!.pendingRewards!;
+      const hasRelic = rewards.some((r) => r.kind === 'relic');
+      expect(hasRelic).toBe(true);
     });
   });
 

@@ -81,6 +81,19 @@ export type RewardOption =
   | { kind: 'potion_hp'; amount: number }
   | { kind: 'power_up'; powerUpId: PowerUpId };
 
+/** Mystery událost na mystery uzlu. */
+export type MysteryEvent =
+  | { kind: 'altar'; relicId: RelicId; hpCost: number }
+  | { kind: 'rest'; hpHeal: number }
+  | { kind: 'chest_gold'; amount: number }
+  | { kind: 'chest_scroll'; powerUpId: PowerUpId };
+
+/** Položka v obchodě. */
+export type ShopItem =
+  | { kind: 'relic'; relicId: RelicId; price: number }
+  | { kind: 'potion_hp'; price: number }
+  | { kind: 'power_up'; powerUpId: PowerUpId; price: number };
+
 /** Kompletní snapshot aktivního runu. Perzistuje se. */
 export interface ActiveRun {
   seed: number;

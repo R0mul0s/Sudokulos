@@ -60,11 +60,11 @@ function NodePill({ node, isCurrent }: NodePillProps) {
 }
 
 interface RunMapScreenProps {
-  onStartLevel: () => void;
+  onEnter: () => void;
   onAbandon: () => void;
 }
 
-export function RunMapScreen({ onStartLevel, onAbandon }: RunMapScreenProps) {
+export function RunMapScreen({ onEnter, onAbandon }: RunMapScreenProps) {
   const { t } = useTranslation();
   const run = useRunStore((s) => s.run);
   const abandonRun = useRunStore((s) => s.abandonRun);
@@ -137,14 +137,13 @@ export function RunMapScreen({ onStartLevel, onAbandon }: RunMapScreenProps) {
         <h2 className="text-xs font-medium uppercase tracking-wide text-slate-600 dark:text-slate-400">
           {t('rpg.progress')}
         </h2>
-        <div className="flex items-center gap-2 overflow-x-auto pb-2">
+        <div className="grid grid-cols-4 gap-2">
           {nodes.map((node, idx) => (
-            <div key={idx} className="flex items-center gap-1">
-              <NodePill node={node} isCurrent={idx === currentNodeIndex} />
-              {idx < nodes.length - 1 && (
-                <span className="text-slate-400 dark:text-slate-600">→</span>
-              )}
-            </div>
+            <NodePill
+              key={idx}
+              node={node}
+              isCurrent={idx === currentNodeIndex}
+            />
           ))}
         </div>
       </section>
@@ -156,21 +155,29 @@ export function RunMapScreen({ onStartLevel, onAbandon }: RunMapScreenProps) {
               {t('rpg.nextNode')}
             </div>
             <div className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-              {t(`rpg.nodeType.${currentNode.type}`)} —{' '}
-              {t(`difficulty.${currentNode.difficulty}`)}
+              {t(`rpg.nodeType.${currentNode.type}`)}
+              {currentNode.type !== 'mystery' && currentNode.type !== 'shop' && (
+                <> — {t(`difficulty.${currentNode.difficulty}`)}</>
+              )}
             </div>
-            <div className="text-xs text-slate-600 dark:text-slate-400">
-              {t(`mode.${currentNode.mode}`)}
-            </div>
+            {currentNode.type !== 'mystery' && currentNode.type !== 'shop' && (
+              <div className="text-xs text-slate-600 dark:text-slate-400">
+                {t(`mode.${currentNode.mode}`)}
+              </div>
+            )}
           </div>
           <span className="text-3xl">{NODE_EMOJI[currentNode.type]}</span>
         </div>
         <button
           type="button"
-          onClick={onStartLevel}
+          onClick={onEnter}
           className="mt-2 rounded-2xl bg-slate-900 px-4 py-3 text-center text-white shadow-sm transition active:scale-[0.98] dark:bg-slate-100 dark:text-slate-900"
         >
-          {t('rpg.startLevel')}
+          {t(
+            currentNode.type === 'mystery' || currentNode.type === 'shop'
+              ? 'rpg.enterNonPuzzle'
+              : 'rpg.startLevel',
+          )}
         </button>
       </section>
     </div>

@@ -175,6 +175,38 @@
     "luckyCell": {
       "label": "Lucky cell — correct value rewards gold and mana, wrong costs extra HP."
     },
+    "enterNonPuzzle": "Enter",
+    "mystery": {
+      "skip": "Skip",
+      "altar": {
+        "title": "Bloody Altar",
+        "desc": "Sacrifice {{hp}} HP to gain the relic \"{{relic}}\".",
+        "accept": "Sacrifice"
+      },
+      "rest": {
+        "title": "Resting Place",
+        "desc": "A quiet moment restores {{hp}} HP.",
+        "accept": "Rest"
+      },
+      "chestGold": {
+        "title": "Gold Chest",
+        "desc": "You find {{amount}} gold.",
+        "accept": "Take"
+      },
+      "chestScroll": {
+        "title": "Scroll Chest",
+        "desc": "Inside lies a power-up: {{name}}.",
+        "accept": "Take"
+      }
+    },
+    "shop": {
+      "title": "Shop",
+      "subtitle": "Spend your gold before moving on.",
+      "empty": "Sold out!",
+      "leave": "Leave shop",
+      "potionHpTitle": "Life Potion",
+      "potionHpDesc": "+1 HP instantly (up to max)."
+    },
     "end": {
       "winTitle": "Victory!",
       "loseTitle": "You fell",

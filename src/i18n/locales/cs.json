@@ -175,6 +175,38 @@
     "luckyCell": {
       "label": "Šťastná buňka — správná hodnota dá zlato a manu, špatná stojí extra HP."
     },
+    "enterNonPuzzle": "Vstoupit",
+    "mystery": {
+      "skip": "Přeskočit",
+      "altar": {
+        "title": "Krvavý oltář",
+        "desc": "Obětuj {{hp}} HP a získej relikvii „{{relic}}\".",
+        "accept": "Obětovat"
+      },
+      "rest": {
+        "title": "Místo k odpočinku",
+        "desc": "Klidná chvíle obnoví {{hp}} HP.",
+        "accept": "Odpočinout"
+      },
+      "chestGold": {
+        "title": "Truhla se zlatem",
+        "desc": "Najdeš {{amount}} zlata.",
+        "accept": "Sebrat"
+      },
+      "chestScroll": {
+        "title": "Truhla se svitkem",
+        "desc": "Uvnitř leží power-up: {{name}}.",
+        "accept": "Vzít"
+      }
+    },
+    "shop": {
+      "title": "Obchod",
+      "subtitle": "Utrať zlato, než půjdeš dál.",
+      "empty": "Vše vyprodáno!",
+      "leave": "Opustit obchod",
+      "potionHpTitle": "Lektvar života",
+      "potionHpDesc": "+1 HP okamžitě (max do plného)."
+    },
     "end": {
       "winTitle": "Vítězství!",
       "loseTitle": "Padl jsi",

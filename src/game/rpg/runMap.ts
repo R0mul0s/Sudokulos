@@ -1,47 +1,55 @@
 /**
- * Generátor run mapy — sekvence uzlů s rostoucí obtížností.
- * MVP: 5 battle uzlů + 1 boss. Delší runy, elity, shop a mystery nody
- * budou přidány ve fázi 8.2.
+ * Generátor run mapy — sekvence uzlů s mixem typů a rostoucí obtížností.
+ * Aktuální struktura (8 uzlů):
+ *   battle (easy) → battle (easy) → mystery → battle (medium) →
+ *   elite (hard killer) → shop → battle (hard) → boss (killer hard)
+ *
+ * Elite je tvrdší předskok bossovi a garantuje rare drop. Shop dává
+ * možnost utratit našetřené zlato. Mystery vnáší náhodný taktický rozhodovací
+ * moment (HP / gold / relic).
  *
  * @author Roman Hlaváček
- * @created 2026-04-24
+ * @created 2026-04-25
  */
-import type { Difficulty } from '@/types/game';
-import type { RunNode } from '@/types/rpg';
+import type { Difficulty, GameMode } from '@/types/game';
+import type { NodeType, RunNode } from '@/types/rpg';
 
-/** Obtížnostní křivka podle pořadí uzlu v runu. */
-const BATTLE_DIFFICULTIES: Difficulty[] = [
-  'easy',
-  'easy',
-  'medium',
-  'medium',
-  'hard',
+interface NodeBlueprint {
+  type: NodeType;
+  difficulty: Difficulty;
+  mode: GameMode;
+}
+
+/** Pevné pořadí uzlů v MVP runu — ladění balansu se dělá přes tato čísla. */
+const NODE_BLUEPRINTS: NodeBlueprint[] = [
+  { type: 'battle', difficulty: 'easy', mode: 'classic' },
+  { type: 'battle', difficulty: 'easy', mode: 'classic' },
+  { type: 'mystery', difficulty: 'easy', mode: 'classic' },
+  { type: 'battle', difficulty: 'medium', mode: 'classic' },
+  { type: 'elite', difficulty: 'hard', mode: 'killer' },
+  { type: 'shop', difficulty: 'easy', mode: 'classic' },
+  { type: 'battle', difficulty: 'hard', mode: 'classic' },
+  { type: 'boss', difficulty: 'hard', mode: 'killer' },
 ];
 
-/** Obtížnost bosse. */
-const BOSS_DIFFICULTY: Difficulty = 'hard';
-
-/** Celkový počet uzlů (5 battle + 1 boss). */
-export const RUN_LENGTH = BATTLE_DIFFICULTIES.length + 1;
+export const RUN_LENGTH = NODE_BLUEPRINTS.length;
 
 /**
- * Vytvoří run mapu. Battle uzly jsou klasické sudoku, boss je killer.
- * Nody ještě nejsou completed.
+ * Vytvoří run mapu z fixních blueprints. Mystery a shop nody mají
+ * difficulty/mode pole z formálních důvodů (typu RunNode), ale jejich UI
+ * neukazuje puzzle.
  */
 export function buildRunNodes(): RunNode[] {
-  const nodes: RunNode[] = BATTLE_DIFFICULTIES.map((difficulty, index) => ({
+  return NODE_BLUEPRINTS.map((bp, index) => ({
     index,
-    type: 'battle',
-    difficulty,
-    mode: 'classic',
+    type: bp.type,
+    difficulty: bp.difficulty,
+    mode: bp.mode,
     completed: false,
   }));
-  nodes.push({
-    index: nodes.length,
-    type: 'boss',
-    difficulty: BOSS_DIFFICULTY,
-    mode: 'killer',
-    completed: false,
-  });
-  return nodes;
+}
+
+/** True pokud daný typ uzlu spouští puzzle (battle/elite/boss). */
+export function isPuzzleNode(type: NodeType): boolean {
+  return type === 'battle' || type === 'elite' || type === 'boss';
 }
