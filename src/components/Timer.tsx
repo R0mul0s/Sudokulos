@@ -7,6 +7,7 @@
 import { useTranslation } from 'react-i18next';
 import { useGameStore } from '@/store/gameStore';
 import { useSettingsStore } from '@/store/settingsStore';
+import { useRunStore } from '@/store/runStore';
 import { formatElapsed } from './format';
 
 export function Timer() {
@@ -14,6 +15,9 @@ export function Timer() {
   const elapsedMs = useGameStore((s) => s.elapsedMs);
   const mistakes = useGameStore((s) => s.mistakes);
   const maxMistakes = useSettingsStore((s) => s.maxMistakes);
+  // V RPG runu se HP řídí přes RunHud (srdíčka), klasický mistakes counter
+  // by tady jen mátl (resetuje se s každým novým puzzle uvnitř runu).
+  const runActive = useRunStore((s) => s.run !== null);
 
   const mistakesText =
     maxMistakes > 0
@@ -28,21 +32,23 @@ export function Timer() {
           {formatElapsed(elapsedMs)}
         </div>
       </div>
-      <div className="text-right">
-        <div className="text-xs uppercase tracking-wide">
-          {t('game.mistakes')}
+      {!runActive && (
+        <div className="text-right">
+          <div className="text-xs uppercase tracking-wide">
+            {t('game.mistakes')}
+          </div>
+          <div
+            className={[
+              'font-mono text-lg tabular-nums',
+              mistakes > 0
+                ? 'text-red-600 dark:text-red-400'
+                : 'text-slate-900 dark:text-slate-100',
+            ].join(' ')}
+          >
+            {mistakesText}
+          </div>
         </div>
-        <div
-          className={[
-            'font-mono text-lg tabular-nums',
-            mistakes > 0
-              ? 'text-red-600 dark:text-red-400'
-              : 'text-slate-900 dark:text-slate-100',
-          ].join(' ')}
-        >
-          {mistakesText}
-        </div>
-      </div>
+      )}
     </div>
   );
 }
