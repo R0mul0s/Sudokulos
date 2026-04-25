@@ -174,7 +174,7 @@ Nápady, které se vyhodnotí až po dokončení 0–6.
 
 Nový herní mód nad existujícím sudoku enginem. Hráč prochází **run** = sekvenci 5–7 puzzle úrovní rostoucí obtížnosti, sbírá relics a zlato, bojuje proti bossovi, umírá (permadeath) a nese si jen **souls** jako meta progression.
 
-**Stav:** 8.1 MVP ✅ nasazené v produkci · 8.2 Rozšíření ⏳ · 8.3 Polish ⏳
+**Stav:** 8.1 MVP ✅ · 8.2 Rozšíření ✅ (vlny A/B/C/D dokončené) · 8.3 Polish ⏳
 
 ### 8.1 Game loop — 4 zoomy
 
@@ -328,16 +328,37 @@ Postavíme ve 3 fázích, každou oddělitelně testovatelnou.
 
 **DoD splněno:** kompletní run od startu do smrti/výhry funguje, souls se ukládají do profilu, relics aktivně mění gameplay (Dragon scale odpouští chybu, Phoenix oživuje, Měděný prsten dává gold bonus).
 
-#### Fáze 8.2 — Rozšíření 🔧
+#### Fáze 8.2 — Rozšíření ✅
 
-- [ ] Zbývajících ~10 relics (zejména z uncommon a rare)
-- [ ] Elite a mystery uzly
-- [ ] Shop s nákupem (potions, scrolls, relics)
-- [ ] Power-up systém (Peek / Shield / Swap)
-- [ ] Lucky cells mechanika
-- [ ] 2–3 další třídy (Mnich, Mág, Rogue)
-- [ ] Odemykání v profilu (spending souls)
-- [ ] Statistiky RPG módu separátně v StatsScreen
+Rozdělené do 4 vln pro postupné iterace.
+
+**Vlna A** ✅ — gameplay mechaniky:
+- ✅ Power-up systém (Peek + Shield) s 1-charge slotem v PlayerState; Swap odložen kvůli 2-step UI flow
+- ✅ Lucky cells (3 default, 5 se Stínem) s reward gold/mana nebo extra HP penalty
+- ✅ Dalších 5 relics: silver_chain, mana_vial, flame_crown, spell_book, sharp_eye
+- ✅ Mana indikátor v RunHud, PowerUpButton
+
+**Vlna B** ✅ — struktura runu (8 uzlů místo 6):
+- ✅ Mystery uzly (Altar / Rest / Chest gold / Chest scroll) s accept/skip volbou
+- ✅ Elite uzly s tvrdším puzzle (hard killer) a garantovaným relic v rewardu
+- ✅ Shop uzly (2 random relics + potion + scroll) s gold-based nákupem
+- ✅ MysteryScreen, ShopScreen + App FSM rozšíření
+
+**Vlna C** ✅ — variety:
+- ✅ 2 další třídy: Mage (2 HP / 20 mana / Mana Vial), Monk (4 HP / 5 mana / Dragon Scale); Warrior zůstává default
+- ✅ Dalších 5 rare relics: stone_totem, shadow, blood_altar (aktivní tlačítko), golden_pact, time_dilation
+- ✅ MenuScreen: výběr třídy (3 tlačítka)
+
+**Vlna D** ✅ — meta progression:
+- ✅ profileStore rozšířen o unlockedClasses, unlockedRelics, perClassRuns
+- ✅ Akce unlockClass / unlockRelic se sols cenou (Mage 100, Monk 150, rare relics 80–120)
+- ✅ generateRewards / Mystery / Shop respektují unlockedRelics (rare se neobjevují dokud je hráč neodemkne)
+- ✅ MetaUnlocksScreen — souls shop pro odemykání
+- ✅ MenuScreen: 🔒 ikona na zamčených třídách (klik vede do souls shopu)
+- ✅ StatsScreen: nový RPG tab s per-class win/played a best run summary
+- ✅ Persist version bumped na 2 s migrací starého profilu
+
+Celkem: **15 relics** (5 common, 5 uncommon, 5 rare), **3 třídy**, **8 uzlů per run**, **182 testů**, build 106 kB gzipped.
 
 #### Fáze 8.3 — Polish 🎨
 

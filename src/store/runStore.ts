@@ -20,7 +20,7 @@ import type {
   RunResult,
   ShopItem,
 } from '@/types/rpg';
-import { ALL_RELIC_IDS, applyOnRunStart, RELICS } from '@/game/rpg/relics';
+import { applyOnRunStart, RELICS } from '@/game/rpg/relics';
 import { DROPPABLE_POWER_UP_IDS } from '@/game/rpg/powerUps';
 import { buildRunNodes, RUN_LENGTH } from '@/game/rpg/runMap';
 import { createRng, type Rng } from '@/game/rng';
@@ -202,10 +202,11 @@ function tryRevive(
  */
 function generateRewards(
   player: PlayerState,
+  unlockedPool: readonly RelicId[],
   rng: Rng,
   forceRelic = false,
 ): RewardOption[] {
-  const available = ALL_RELIC_IDS.filter(
+  const available = unlockedPool.filter(
     (id) => !player.relics.some((r) => r.id === id),
   );
   const options: RewardOption[] = [];
@@ -243,8 +244,12 @@ function generateRewards(
 }
 
 /** Vygeneruje mystery událost — vážené losování ze 4 typů. */
-function generateMysteryEvent(player: PlayerState, rng: Rng): MysteryEvent {
-  const available = ALL_RELIC_IDS.filter(
+function generateMysteryEvent(
+  player: PlayerState,
+  unlockedPool: readonly RelicId[],
+  rng: Rng,
+): MysteryEvent {
+  const available = unlockedPool.filter(
     (id) => !player.relics.some((r) => r.id === id),
   );
   const roll = rng();
@@ -267,9 +272,13 @@ function generateMysteryEvent(player: PlayerState, rng: Rng): MysteryEvent {
 }
 
 /** Vygeneruje shop nabídku — 2 relics, 1 potion, 1 scroll. */
-function generateShopOffer(player: PlayerState, rng: Rng): ShopItem[] {
+function generateShopOffer(
+  player: PlayerState,
+  unlockedPool: readonly RelicId[],
+  rng: Rng,
+): ShopItem[] {
   const items: ShopItem[] = [];
-  const availableRelics = ALL_RELIC_IDS.filter(
+  const availableRelics = unlockedPool.filter(
     (id) => !player.relics.some((r) => r.id === id),
   );
   // Fisher-Yates shuffle pro výběr až 2 relics
@@ -307,6 +316,7 @@ function buildRunResult(
     levelsCompleted * SOULS_PER_LEVEL +
     (won ? SOULS_WIN_BONUS : 0);
   return {
+    characterClass: run.player.characterClass,
     won,
     levelsCompleted,
     totalLevels: RUN_LENGTH,
@@ -360,12 +370,20 @@ export const useRunStore = create<RunStore>()(
       ...INITIAL_STATE,
 
       startRun: (characterClass = 'warrior', seed = Date.now()) => {
-        const blueprint = DEFAULT_CLASS_STATS[characterClass];
+        // Bezpečnostní pojistka: pokud má hráč class zamčenou (např. modifikoval localStorage),
+        // přepne na warrior, který je vždy unlocked.
+        const profile = useProfileStore.getState().profile;
+        const cls: CharacterClass = profile.unlockedClasses.includes(
+          characterClass,
+        )
+          ? characterClass
+          : 'warrior';
+        const blueprint = DEFAULT_CLASS_STATS[cls];
         const startingRelics: OwnedRelic[] = blueprint.startingRelics.map(
           (id) => ({ id, consumed: false }),
         );
         const basePlayer: PlayerState = {
-          characterClass,
+          characterClass: cls,
           maxHp: blueprint.maxHp,
           hp: blueprint.hp,
           maxMana: blueprint.maxMana,
@@ -547,7 +565,8 @@ export const useRunStore = create<RunStore>()(
           i === run.currentNodeIndex ? { ...n, completed: true } : n,
         );
         const rng = createRng(run.seed + run.currentNodeIndex + 1);
-        const pendingRewards = generateRewards(run.player, rng, isElite);
+        const pool = useProfileStore.getState().profile.unlockedRelics;
+        const pendingRewards = generateRewards(run.player, pool, rng, isElite);
         const nextPlayer: PlayerState = {
           ...run.player,
           gold: run.player.gold + bonusGold,
@@ -765,7 +784,8 @@ export const useRunStore = create<RunStore>()(
         const node = run.nodes[run.currentNodeIndex];
         if (node.type !== 'mystery' || levelState.pendingMystery) return;
         const rng = createRng(run.seed + run.currentNodeIndex * 6151);
-        const event = generateMysteryEvent(run.player, rng);
+        const pool = useProfileStore.getState().profile.unlockedRelics;
+        const event = generateMysteryEvent(run.player, pool, rng);
         set({ levelState: { ...levelState, pendingMystery: event } });
       },
 
@@ -886,7 +906,8 @@ export const useRunStore = create<RunStore>()(
         const node = run.nodes[run.currentNodeIndex];
         if (node.type !== 'shop' || levelState.shopOffer) return;
         const rng = createRng(run.seed + run.currentNodeIndex * 5413);
-        const offer = generateShopOffer(run.player, rng);
+        const pool = useProfileStore.getState().profile.unlockedRelics;
+        const offer = generateShopOffer(run.player, pool, rng);
         set({ levelState: { ...levelState, shopOffer: offer } });
       },
 

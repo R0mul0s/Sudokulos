@@ -76,7 +76,16 @@
     "dayMany": "days in a row",
     "byDifficulty": "By difficulty",
     "clear": "Clear history",
-    "confirmClear": "Really clear all statistics?"
+    "confirmClear": "Really clear all statistics?",
+    "rpg": {
+      "souls": "Souls",
+      "runs": "Runs",
+      "wins": "Wins",
+      "byClass": "By class",
+      "bestRun": "Best run",
+      "bestRunWon": "Victory",
+      "bestRunReached": "Reached node {{completed}}"
+    }
   },
   "language": {
     "label": "Language",
@@ -86,6 +95,15 @@
   "install": {
     "title": "Install as app",
     "subtitle": "Offline, quick launch, no browser chrome"
+  },
+  "meta": {
+    "title": "Souls shop",
+    "subtitle": "Spend souls on permanent unlocks for future runs.",
+    "close": "Close",
+    "balance": "Your souls",
+    "classesSection": "Classes",
+    "relicsSection": "Rare relics",
+    "allUnlocked": "Everything unlocked!"
   },
   "rpg": {
     "menuTitle": "RPG Run",
@@ -198,6 +216,7 @@
     "bloodAltar": {
       "action": "Blood Altar: −1 HP / +50 gold"
     },
+    "openMeta": "Souls shop — unlock more classes and relics",
     "powerUp": {
       "peek": {
         "name": "Peek",

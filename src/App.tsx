@@ -15,12 +15,13 @@ import { RewardScreen } from '@/components/rpg/RewardScreen';
 import { RunEndScreen } from '@/components/rpg/RunEndScreen';
 import { MysteryScreen } from '@/components/rpg/MysteryScreen';
 import { ShopScreen } from '@/components/rpg/ShopScreen';
+import { MetaUnlocksScreen } from '@/components/rpg/MetaUnlocksScreen';
 import { useGameStore } from '@/store/gameStore';
 import { useRunStore } from '@/store/runStore';
 import { isPuzzleNode } from '@/game/rpg/runMap';
 import { useThemeSync } from '@/hooks/useThemeSync';
 
-type MenuTab = 'menu' | 'settings' | 'stats';
+type MenuTab = 'menu' | 'settings' | 'stats' | 'meta';
 
 function App() {
   const status = useGameStore((s) => s.status);
@@ -120,10 +121,14 @@ function App() {
     if (menuTab === 'stats') {
       return <StatsScreen onClose={() => setMenuTab('menu')} />;
     }
+    if (menuTab === 'meta') {
+      return <MetaUnlocksScreen onClose={() => setMenuTab('menu')} />;
+    }
     return (
       <MenuScreen
         onOpenSettings={() => setMenuTab('settings')}
         onOpenStats={() => setMenuTab('stats')}
+        onOpenMeta={() => setMenuTab('meta')}
       />
     );
   };

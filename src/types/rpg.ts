@@ -117,6 +117,7 @@ export interface ActiveRun {
 
 /** Výsledek runu pro statistiky a meta progression. */
 export interface RunResult {
+  characterClass: CharacterClass;
   won: boolean;
   levelsCompleted: number;
   totalLevels: number;
@@ -130,10 +131,21 @@ export interface RunResult {
   finishedAt: string;
 }
 
+export interface ClassRunStats {
+  played: number;
+  won: number;
+}
+
 /** Meta profil — přežívá smrt runu, drží souls a dlouhodobé statistiky. */
 export interface PlayerProfile {
   souls: number;
   totalRuns: number;
   runsWon: number;
   bestRun: RunResult | null;
+  /** Třídy, které si hráč odemkl. Warrior je odemčený od začátku. */
+  unlockedClasses: CharacterClass[];
+  /** Relics dostupné v dropping pool. Common + uncommon defaultně, rare odemyká hráč. */
+  unlockedRelics: RelicId[];
+  /** Per-třída agregace dohraných runů. */
+  perClassRuns: Partial<Record<CharacterClass, ClassRunStats>>;
 }

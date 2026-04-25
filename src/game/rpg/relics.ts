@@ -178,6 +178,21 @@ export const RELICS: Record<RelicId, RelicRuntime> = {
 
 export const ALL_RELIC_IDS: RelicId[] = Object.keys(RELICS) as RelicId[];
 
+/** Relics dostupné v defaultním dropping pool (common + uncommon). Rare odemyká hráč. */
+export const STARTER_RELIC_IDS: RelicId[] = ALL_RELIC_IDS.filter(
+  (id) => RELICS[id].definition.rarity !== 'rare',
+);
+
+/** Cena za odemčení rare relicu v souls shopu. */
+export const RELIC_UNLOCK_COSTS: Partial<Record<RelicId, number>> = {
+  phoenix: 80,
+  stone_totem: 80,
+  shadow: 100,
+  blood_altar: 100,
+  golden_pact: 120,
+  time_dilation: 80,
+};
+
 export function getRelic(id: RelicId): RelicRuntime {
   return RELICS[id];
 }

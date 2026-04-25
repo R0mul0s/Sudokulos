@@ -428,7 +428,55 @@ describe('runStore', () => {
     });
   });
 
+  describe('unlockedRelics filtrace', () => {
+    it('reward generator nedá relic, který hráč ještě neodemkl', () => {
+      // Nastavíme profil tak, aby neměl phoenix odemčený a měl jen jednu volbu
+      useProfileStore.setState((state) => ({
+        profile: {
+          ...state.profile,
+          unlockedRelics: ['amulet_of_insight'],
+        },
+      }));
+      useRunStore.getState().startRun('warrior', 1);
+      // Forcujeme finishCurrentLevel
+      useRunStore.getState().finishCurrentLevel(60_000);
+      const rewards = useRunStore.getState().run!.pendingRewards!;
+      for (const reward of rewards) {
+        if (reward.kind === 'relic') {
+          expect(reward.relicId).toBe('amulet_of_insight');
+        }
+      }
+    });
+
+    it('startRun se zamčenou třídou spadne zpět na warrior', () => {
+      // Mage není v unlockedClasses default
+      useRunStore.getState().startRun('mage', 1);
+      expect(useRunStore.getState().run!.player.characterClass).toBe('warrior');
+    });
+
+    it('startRun s odemčenou třídou ji použije', () => {
+      useProfileStore.setState((state) => ({
+        profile: {
+          ...state.profile,
+          unlockedClasses: [...state.profile.unlockedClasses, 'mage'],
+        },
+      }));
+      useRunStore.getState().startRun('mage', 1);
+      expect(useRunStore.getState().run!.player.characterClass).toBe('mage');
+    });
+  });
+
   describe('třídy a startovní relics', () => {
+    beforeEach(() => {
+      // Pro tyto testy předpokládáme, že hráč už si odemknul všechny třídy.
+      useProfileStore.setState((state) => ({
+        profile: {
+          ...state.profile,
+          unlockedClasses: ['warrior', 'mage', 'monk'],
+        },
+      }));
+    });
+
     it('Mage začíná s 2 HP, 20 maxMana a Mana Vial v inventáři', () => {
       useRunStore.getState().startRun('mage', 1);
       const player = useRunStore.getState().run!.player;

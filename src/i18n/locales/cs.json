@@ -76,7 +76,16 @@
     "dayMany": "dnů po sobě",
     "byDifficulty": "Podle obtížnosti",
     "clear": "Vymazat historii",
-    "confirmClear": "Opravdu smazat všechny statistiky?"
+    "confirmClear": "Opravdu smazat všechny statistiky?",
+    "rpg": {
+      "souls": "Souls",
+      "runs": "Runy",
+      "wins": "Výhry",
+      "byClass": "Podle třídy",
+      "bestRun": "Nejlepší run",
+      "bestRunWon": "Vítězství",
+      "bestRunReached": "Dosáhl uzlu {{completed}}"
+    }
   },
   "language": {
     "label": "Jazyk",
@@ -86,6 +95,15 @@
   "install": {
     "title": "Nainstalovat jako aplikaci",
     "subtitle": "Offline, rychlé spuštění, bez prohlížeče"
+  },
+  "meta": {
+    "title": "Souls shop",
+    "subtitle": "Utrať souls za trvalá vylepšení do dalších runů.",
+    "close": "Zavřít",
+    "balance": "Tvoje souls",
+    "classesSection": "Třídy",
+    "relicsSection": "Vzácné relikvie",
+    "allUnlocked": "Vše odemčeno!"
   },
   "rpg": {
     "menuTitle": "RPG Run",
@@ -198,6 +216,7 @@
     "bloodAltar": {
       "action": "Oltář krve: −1 HP / +50 zlata"
     },
+    "openMeta": "Souls shop — odemkni další třídy a relikvie",
     "powerUp": {
       "peek": {
         "name": "Peek",
