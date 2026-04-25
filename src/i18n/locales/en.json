@@ -135,7 +135,45 @@
       "phoenix": {
         "name": "Phoenix",
         "desc": "Once per run, revives you at 1 HP on death."
+      },
+      "silver_chain": {
+        "name": "Silver Chain",
+        "desc": "+5 max mana and instant restore by 5."
+      },
+      "mana_vial": {
+        "name": "Mana Vial",
+        "desc": "At the start of each level restores 5 mana."
+      },
+      "flame_crown": {
+        "name": "Flame Crown",
+        "desc": "+25% bonus gold for fast level completions (under 3 minutes)."
+      },
+      "spell_book": {
+        "name": "Spell Book",
+        "desc": "Power-up slots have 2 charges instead of 1."
+      },
+      "sharp_eye": {
+        "name": "Sharp Eye",
+        "desc": "Peer highlight extends to diagonally adjacent cells."
       }
+    },
+    "powerUp": {
+      "peek": {
+        "name": "Peek",
+        "desc": "Reveals the correct value of the selected cell for 3 seconds."
+      },
+      "shield": {
+        "name": "Shield",
+        "desc": "Absorbs the next mistake — no HP loss, combo intact.",
+        "activeTag": "active"
+      },
+      "swap": {
+        "name": "Swap",
+        "desc": "Swap values of two cells. (Coming soon.)"
+      }
+    },
+    "luckyCell": {
+      "label": "Lucky cell — correct value rewards gold and mana, wrong costs extra HP."
     },
     "end": {
       "winTitle": "Victory!",

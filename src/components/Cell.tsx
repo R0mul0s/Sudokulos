@@ -1,6 +1,7 @@
 /**
  * Jedna buňka sudoku desky. Zobrazuje hodnotu nebo poznámky a reaguje na klik.
- * O logiku stavu (selection, highlight) se stará rodič (Board).
+ * O logiku stavu (selection, highlight) se stará rodič (Board). RPG overlay
+ * (lucky cell hvězdička, peek vodoznak) jsou volitelné props.
  *
  * @author Roman Hlaváček
  * @created 2026-04-24
@@ -17,6 +18,10 @@ export interface CellProps {
   isPeer: boolean;
   isSameValue: boolean;
   isError: boolean;
+  /** True pokud buňka je v RPG runu označená jako lucky a ještě není vyřešená. */
+  isLucky?: boolean;
+  /** Vodoznak hodnoty z Peek power-upu (zobrazí se transparentně, neovlivňuje stav). */
+  peekValue?: number | null;
   onClick: (row: number, col: number) => void;
 }
 
@@ -65,9 +70,12 @@ export const Cell = memo(function Cell({
   isPeer,
   isSameValue,
   isError,
+  isLucky = false,
+  peekValue = null,
   onClick,
 }: CellProps) {
   const hasValue = cell.value !== 0;
+  const showPeek = !hasValue && peekValue !== null;
 
   return (
     <button
@@ -86,18 +94,27 @@ export const Cell = memo(function Cell({
     >
       {hasValue ? (
         cell.value
+      ) : showPeek ? (
+        <span className="text-2xl font-semibold text-amber-500/70 sm:text-3xl">
+          {peekValue}
+        </span>
       ) : cell.notes.size > 0 ? (
         <div className="grid h-full w-full grid-cols-3 grid-rows-3 p-0.5 text-[9px] leading-none text-text-muted sm:text-[11px]">
           {NOTE_GRID.map((n) => (
-            <span
-              key={n}
-              className="flex items-center justify-center"
-            >
+            <span key={n} className="flex items-center justify-center">
               {cell.notes.has(n) ? n : ''}
             </span>
           ))}
         </div>
       ) : null}
+      {isLucky && !hasValue && (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute right-0.5 top-0 text-[10px] leading-none text-amber-500"
+        >
+          ⭐
+        </span>
+      )}
     </button>
   );
 });

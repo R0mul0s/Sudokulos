@@ -1,6 +1,8 @@
 /**
  * Hlavní herní deska 9×9. Čte stav ze storu a zařizuje zvýraznění.
  * V killer módu vykresluje nad mřížkou overlay s ohraničením klecí a součty.
+ * V RPG runu navíc ukazuje lucky cells, peek vodoznak a (s relic Sharp Eye)
+ * rozšiřuje peer highlight o diagonálně sousedící buňky.
  *
  * @author Roman Hlaváček
  * @created 2026-04-24
@@ -12,6 +14,7 @@ import { findConflicts } from '@/game/validator';
 import { findCageConflicts } from '@/game/killer/validator';
 import { useGameStore } from '@/store/gameStore';
 import { useSettingsStore } from '@/store/settingsStore';
+import { useRunStore } from '@/store/runStore';
 import { Cell } from './Cell';
 import { CageOverlay } from './killer/CageOverlay';
 
@@ -20,6 +23,7 @@ function isPeer(
   col: number,
   selRow: number,
   selCol: number,
+  includeDiagonals: boolean,
 ): boolean {
   if (row === selRow && col === selCol) return false;
   if (row === selRow || col === selCol) return true;
@@ -27,7 +31,13 @@ function isPeer(
     Math.floor(row / BLOCK_SIZE) === Math.floor(selRow / BLOCK_SIZE);
   const sameBlockCol =
     Math.floor(col / BLOCK_SIZE) === Math.floor(selCol / BLOCK_SIZE);
-  return sameBlockRow && sameBlockCol;
+  if (sameBlockRow && sameBlockCol) return true;
+  if (includeDiagonals) {
+    if (Math.abs(row - selRow) === 1 && Math.abs(col - selCol) === 1) {
+      return true;
+    }
+  }
+  return false;
 }
 
 export function Board() {
@@ -38,6 +48,14 @@ export function Board() {
   const selected = useGameStore((s) => s.selected);
   const selectCell = useGameStore((s) => s.selectCell);
   const highlightSameDigits = useSettingsStore((s) => s.highlightSameDigits);
+  const luckyCells = useRunStore((s) => s.run?.luckyCells ?? []);
+  const consumedLucky = useRunStore((s) => s.levelState.consumedLuckyCells);
+  const peek = useRunStore((s) => s.levelState.peek);
+  const sharpEye = useRunStore((s) =>
+    (s.run?.player.relics ?? []).some(
+      (r) => r.id === 'sharp_eye' && !r.consumed,
+    ),
+  );
 
   const conflictSet = useMemo(() => {
     if (!board) return new Set<string>();
@@ -51,6 +69,12 @@ export function Board() {
     }
     return all;
   }, [board, mode, cages]);
+
+  const luckySet = useMemo(() => {
+    const set = new Set(luckyCells);
+    for (const consumed of consumedLucky) set.delete(consumed);
+    return set;
+  }, [luckyCells, consumedLucky]);
 
   if (!board) return null;
 
@@ -71,7 +95,7 @@ export function Board() {
             selected?.row === rowIdx && selected?.col === colIdx;
           const peer =
             selected !== null &&
-            isPeer(rowIdx, colIdx, selected.row, selected.col);
+            isPeer(rowIdx, colIdx, selected.row, selected.col, sharpEye);
           const sameValue =
             highlightSameDigits &&
             selectedValue !== null &&
@@ -82,6 +106,11 @@ export function Board() {
             cell.value !== 0 &&
             (conflictSet.has(`${rowIdx},${colIdx}`) ||
               (solution !== null && solution[rowIdx][colIdx] !== cell.value));
+          const isLucky = luckySet.has(`${rowIdx},${colIdx}`);
+          const peekValue =
+            peek && peek.row === rowIdx && peek.col === colIdx
+              ? peek.value
+              : null;
 
           return (
             <Cell
@@ -93,6 +122,8 @@ export function Board() {
               isPeer={peer}
               isSameValue={sameValue}
               isError={isError}
+              isLucky={isLucky}
+              peekValue={peekValue}
               onClick={selectCell}
             />
           );

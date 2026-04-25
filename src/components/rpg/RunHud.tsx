@@ -8,6 +8,7 @@
 import { useTranslation } from 'react-i18next';
 import type { RelicId } from '@/types/rpg';
 import { useRunStore } from '@/store/runStore';
+import { PowerUpButton } from './PowerUpButton';
 
 const RELIC_EMOJI: Record<RelicId, string> = {
   amulet_of_insight: '🔮',
@@ -15,6 +16,11 @@ const RELIC_EMOJI: Record<RelicId, string> = {
   leather_glove: '🧤',
   dragon_scale: '🛡️',
   phoenix: '🦅',
+  silver_chain: '⛓️',
+  mana_vial: '🧪',
+  flame_crown: '👑',
+  spell_book: '📖',
+  sharp_eye: '👁️',
 };
 
 function HeartRow({ hp, maxHp }: { hp: number; maxHp: number }) {
@@ -58,6 +64,14 @@ export function RunHud() {
           <span className="flex items-center gap-1">
             💰 <span className="tabular-nums">{player.gold}</span>
           </span>
+          {player.maxMana > 0 && (
+            <span className="flex items-center gap-1">
+              🔵{' '}
+              <span className="tabular-nums">
+                {player.mana}/{player.maxMana}
+              </span>
+            </span>
+          )}
           {player.combo >= 2 && (
             <span className="flex items-center gap-1 rounded-full bg-amber-200 px-2 py-0.5 text-amber-900 dark:bg-amber-500/30 dark:text-amber-200">
               🔥 ×{player.combo}
@@ -65,6 +79,12 @@ export function RunHud() {
           )}
         </div>
       </div>
+
+      {player.powerUp && (
+        <div className="flex justify-end">
+          <PowerUpButton />
+        </div>
+      )}
 
       {player.relics.length > 0 && (
         <div className="flex flex-wrap gap-1" aria-label={t('rpg.relicsLabel')}>

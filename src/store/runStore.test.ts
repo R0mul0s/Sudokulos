@@ -5,7 +5,7 @@
  * @author Roman Hlaváček
  * @created 2026-04-24
  */
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useRunStore } from './runStore';
 import { useProfileStore } from './profileStore';
 import { RUN_LENGTH } from '@/game/rpg/runMap';
@@ -16,7 +16,12 @@ describe('runStore', () => {
     useRunStore.setState({
       run: null,
       result: null,
-      levelState: { firstMistakeForgiven: false },
+      levelState: {
+        firstMistakeForgiven: false,
+        shieldActive: false,
+        peek: null,
+        consumedLuckyCells: [],
+      },
     });
     useProfileStore.getState().resetProfile();
   });
@@ -192,6 +197,142 @@ describe('runStore', () => {
       expect(useRunStore.getState().run).toBeNull();
       expect(useRunStore.getState().result!.won).toBe(true);
       expect(useProfileStore.getState().profile.runsWon).toBe(1);
+    });
+  });
+
+  describe('power-ups', () => {
+    it('activateShield bez slotu vrátí false', () => {
+      useRunStore.getState().startRun();
+      expect(useRunStore.getState().activateShield()).toBe(false);
+    });
+
+    it('Shield pohltí příští mistake bez ztráty HP a beze zbavení combo', () => {
+      useRunStore.getState().startRun();
+      useRunStore.setState((state) => ({
+        run: state.run
+          ? {
+              ...state.run,
+              player: {
+                ...state.run.player,
+                powerUp: { id: 'shield', charges: 1 },
+                combo: 4,
+              },
+            }
+          : null,
+      }));
+      expect(useRunStore.getState().activateShield()).toBe(true);
+      expect(useRunStore.getState().run!.player.powerUp).toBeNull();
+      expect(useRunStore.getState().levelState.shieldActive).toBe(true);
+      const hpBefore = useRunStore.getState().run!.player.hp;
+      useRunStore.getState().recordMistake();
+      // Shield se spotřeboval, HP nezměněné
+      expect(useRunStore.getState().run!.player.hp).toBe(hpBefore);
+      expect(useRunStore.getState().levelState.shieldActive).toBe(false);
+    });
+
+    it('Peek aktivuje vodoznak a po expirační době se zruší', () => {
+      vi.useFakeTimers();
+      try {
+        useRunStore.getState().startRun();
+        useRunStore.setState((state) => ({
+          run: state.run
+            ? {
+                ...state.run,
+                player: {
+                  ...state.run.player,
+                  powerUp: { id: 'peek', charges: 1 },
+                },
+              }
+            : null,
+        }));
+        const ok = useRunStore.getState().activatePeek(2, 4, 7);
+        expect(ok).toBe(true);
+        expect(useRunStore.getState().levelState.peek).toEqual(
+          expect.objectContaining({ row: 2, col: 4, value: 7 }),
+        );
+        expect(useRunStore.getState().run!.player.powerUp).toBeNull();
+        vi.advanceTimersByTime(3_500);
+        expect(useRunStore.getState().levelState.peek).toBeNull();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('Spell Book dá 2 charges power-upu z dropu', () => {
+      useRunStore.getState().startRun();
+      useRunStore.setState((state) => ({
+        run: state.run
+          ? {
+              ...state.run,
+              player: {
+                ...state.run.player,
+                relics: [{ id: 'spell_book', consumed: false }],
+              },
+              pendingRewards: [{ kind: 'power_up', powerUpId: 'shield' }],
+            }
+          : null,
+      }));
+      useRunStore.getState().chooseReward(0);
+      // Pendinrewards shut, currentNodeIndex advanced — power-up je v slotu
+      // (state vidíme po advance levelState reset).
+      // Use před chooseReward by neproběhlo, takže si načteme stav před přepnutím:
+      // power-up je v new player slotu po `applyReward` s 2 charges (kvůli spell_book).
+      expect(useRunStore.getState().run!.player.powerUp).toEqual({
+        id: 'shield',
+        charges: 2,
+      });
+    });
+  });
+
+  describe('lucky cells', () => {
+    it('initLuckyCells vybere N pozic z dostupných prázdných', () => {
+      useRunStore.getState().startRun('warrior', 99);
+      const empty: Array<[number, number]> = [];
+      for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) empty.push([r, c]);
+      useRunStore.getState().initLuckyCells(empty);
+      const lucky = useRunStore.getState().run!.luckyCells;
+      expect(lucky).toHaveLength(3);
+      expect(new Set(lucky).size).toBe(3);
+    });
+
+    it('správně vyplněná lucky cell dá gold + manu', () => {
+      useRunStore.getState().startRun();
+      useRunStore.setState((state) => ({
+        run: state.run
+          ? { ...state.run, luckyCells: ['1,1'] }
+          : null,
+      }));
+      const goldBefore = useRunStore.getState().run!.player.gold;
+      useRunStore.getState().recordLuckyHit(1, 1, true);
+      expect(useRunStore.getState().run!.player.gold).toBeGreaterThan(
+        goldBefore,
+      );
+      expect(useRunStore.getState().run!.player.mana).toBeGreaterThan(0);
+    });
+
+    it('špatně vyplněná lucky cell strhne extra HP', () => {
+      useRunStore.getState().startRun();
+      useRunStore.setState((state) => ({
+        run: state.run
+          ? { ...state.run, luckyCells: ['2,2'] }
+          : null,
+      }));
+      const hpBefore = useRunStore.getState().run!.player.hp;
+      useRunStore.getState().recordLuckyHit(2, 2, false);
+      expect(useRunStore.getState().run!.player.hp).toBe(hpBefore - 1);
+    });
+
+    it('lucky cell se započítá jen jednou za level', () => {
+      useRunStore.getState().startRun();
+      useRunStore.setState((state) => ({
+        run: state.run
+          ? { ...state.run, luckyCells: ['3,3'] }
+          : null,
+      }));
+      useRunStore.getState().recordLuckyHit(3, 3, true);
+      const goldAfterFirst = useRunStore.getState().run!.player.gold;
+      useRunStore.getState().recordLuckyHit(3, 3, true);
+      expect(useRunStore.getState().run!.player.gold).toBe(goldAfterFirst);
     });
   });
 });

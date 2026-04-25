@@ -42,10 +42,14 @@ export interface RelicRuntime {
     player: PlayerState,
     relic: OwnedRelic,
   ) => { player: PlayerState; relic: OwnedRelic } | null;
-  /** Modifikuje gold odměnu z chain reaction. */
+  /** Modifikuje gold odměnu z chain reaction (multiplikativně). */
   chainGoldMultiplier?: number;
   /** Přidá fixní gold po dokončeném levelu. */
   levelEndBonusGold?: number;
+  /** Procentuální gold bonus za rychlé dokončení (Flame Crown). */
+  fastLevelGoldMultiplier?: number;
+  /** Mana navíc na startu každého levelu. */
+  manaPerLevelStart?: number;
 }
 
 const AMULET_OF_INSIGHT: RelicRuntime = {
@@ -85,12 +89,47 @@ const PHOENIX: RelicRuntime = {
   },
 };
 
+const SILVER_CHAIN: RelicRuntime = {
+  definition: { id: 'silver_chain', rarity: 'common', price: 70 },
+  onRunStart: (player) => ({
+    ...player,
+    maxMana: player.maxMana + 5,
+    mana: player.mana + 5,
+  }),
+};
+
+const MANA_VIAL: RelicRuntime = {
+  definition: { id: 'mana_vial', rarity: 'common', price: 60 },
+  manaPerLevelStart: 5,
+};
+
+const FLAME_CROWN: RelicRuntime = {
+  definition: { id: 'flame_crown', rarity: 'uncommon', price: 160 },
+  // 25% bonus z fast-level rewardu (zacházení v finishCurrentLevel).
+  fastLevelGoldMultiplier: 1.25,
+};
+
+const SPELL_BOOK: RelicRuntime = {
+  definition: { id: 'spell_book', rarity: 'uncommon', price: 180 },
+  // Power-up sloty mají 2 charges místo 1 (interakce v applyReward).
+};
+
+const SHARP_EYE: RelicRuntime = {
+  definition: { id: 'sharp_eye', rarity: 'uncommon', price: 150 },
+  // Peer highlight rozšířen o diagonálně sousedící buňky (interakce v Board).
+};
+
 export const RELICS: Record<RelicId, RelicRuntime> = {
   amulet_of_insight: AMULET_OF_INSIGHT,
   copper_ring: COPPER_RING,
   leather_glove: LEATHER_GLOVE,
   dragon_scale: DRAGON_SCALE,
   phoenix: PHOENIX,
+  silver_chain: SILVER_CHAIN,
+  mana_vial: MANA_VIAL,
+  flame_crown: FLAME_CROWN,
+  spell_book: SPELL_BOOK,
+  sharp_eye: SHARP_EYE,
 };
 
 export const ALL_RELIC_IDS: RelicId[] = Object.keys(RELICS) as RelicId[];

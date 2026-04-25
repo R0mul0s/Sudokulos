@@ -6,6 +6,7 @@
  */
 import { useTranslation } from 'react-i18next';
 import type { RelicId, RewardOption } from '@/types/rpg';
+import { POWER_UPS } from '@/game/rpg/powerUps';
 import { useRunStore } from '@/store/runStore';
 
 const RELIC_EMOJI: Record<RelicId, string> = {
@@ -14,6 +15,11 @@ const RELIC_EMOJI: Record<RelicId, string> = {
   leather_glove: '🧤',
   dragon_scale: '🛡️',
   phoenix: '🦅',
+  silver_chain: '⛓️',
+  mana_vial: '🧪',
+  flame_crown: '👑',
+  spell_book: '📖',
+  sharp_eye: '👁️',
 };
 
 interface RewardCardProps {
@@ -36,6 +42,10 @@ function RewardCard({ option, onPick }: RewardCardProps) {
     icon = '❤️';
     title = t('rpg.reward.potionHpTitle', { amount: option.amount });
     description = t('rpg.reward.potionHpDesc');
+  } else if (option.kind === 'power_up') {
+    icon = POWER_UPS[option.powerUpId].icon;
+    title = t(`rpg.powerUp.${option.powerUpId}.name`);
+    description = t(`rpg.powerUp.${option.powerUpId}.desc`);
   } else {
     icon = RELIC_EMOJI[option.relicId] ?? '✨';
     title = t(`rpg.relic.${option.relicId}.name`);

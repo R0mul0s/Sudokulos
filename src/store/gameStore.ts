@@ -186,6 +186,22 @@ function countNewlyCompletedGroups(
   return count;
 }
 
+/**
+ * Pokud je aktivní RPG run, inicializuje lucky cells podle prázdných buněk
+ * na čerstvě nasazené desce.
+ */
+function maybeInitLuckyCells(board: Board): void {
+  const runStore = useRunStore.getState();
+  if (!runStore.run) return;
+  const empty: Array<[number, number]> = [];
+  for (let r = 0; r < BOARD_SIZE; r++) {
+    for (let c = 0; c < BOARD_SIZE; c++) {
+      if (board[r][c].value === EMPTY_CELL) empty.push([r, c]);
+    }
+  }
+  runStore.initLuckyCells(empty);
+}
+
 /** Najde první prázdnou buňku na desce — pro hint. Vrací null pokud žádná není. */
 function findFirstEmpty(board: Board): Position | null {
   for (let r = 0; r < BOARD_SIZE; r++) {
@@ -283,15 +299,17 @@ export const useGameStore = create<GameStore>()(
             hintsUsed: 0,
             history: [],
           });
+          maybeInitLuckyCells(emptyBoard);
           return;
         }
 
         const { puzzle, solution } = generatePuzzle(difficulty);
+        const newBoard = boardFromPuzzle(puzzle);
         set({
           status: 'playing',
           difficulty,
           mode,
-          board: boardFromPuzzle(puzzle),
+          board: newBoard,
           solution,
           cages: null,
           selected: null,
@@ -301,6 +319,7 @@ export const useGameStore = create<GameStore>()(
           hintsUsed: 0,
           history: [],
         });
+        maybeInitLuckyCells(newBoard);
       },
 
       returnToMenu: () => {
@@ -416,6 +435,7 @@ export const useGameStore = create<GameStore>()(
             );
             useRunStore.getState().recordCorrect(chainCount);
           }
+          useRunStore.getState().recordLuckyHit(row, col, !isMistake);
         }
 
         if (nextStatus === 'completed') {

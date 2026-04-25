@@ -12,12 +12,14 @@ import type {
   CharacterClass,
   OwnedRelic,
   PlayerState,
+  PowerUpId,
   RelicId,
   RewardOption,
   RunNode,
   RunResult,
 } from '@/types/rpg';
 import { ALL_RELIC_IDS, applyOnRunStart, RELICS } from '@/game/rpg/relics';
+import { DROPPABLE_POWER_UP_IDS } from '@/game/rpg/powerUps';
 import { buildRunNodes, RUN_LENGTH } from '@/game/rpg/runMap';
 import { createRng, type Rng } from '@/game/rng';
 import { useProfileStore } from './profileStore';
@@ -47,9 +49,23 @@ const DEFAULT_CLASS_STATS: Record<
   warrior: { maxHp: 3, hp: 3, maxMana: 10, mana: 0 },
 };
 
+interface PeekState {
+  row: number;
+  col: number;
+  value: number;
+  /** Date.now() limit, po kterém peek vyprší. */
+  untilTimestamp: number;
+}
+
 interface LevelState {
-  /** Obtížnost odmazávání chyb — Dragon scale odpustí první chybu v levelu. */
+  /** Dragon scale odpustí první chybu v levelu. */
   firstMistakeForgiven: boolean;
+  /** Power-up Shield aktivní — pohltí příští mistake. */
+  shieldActive: boolean;
+  /** Aktuální peek odhalení (3 s viditelnost správné hodnoty). */
+  peek: PeekState | null;
+  /** Souls bonus a HP penalty za lucky cells, které byly v levelu zatím vyřešené. */
+  consumedLuckyCells: string[];
 }
 
 interface RunState {
@@ -64,19 +80,44 @@ interface RunActions {
   currentNode: () => RunNode | null;
   recordMistake: () => void;
   recordCorrect: (chainCount: number) => void;
+  recordLuckyHit: (row: number, col: number, correct: boolean) => void;
   finishCurrentLevel: (elapsedMs: number) => void;
   chooseReward: (optionIndex: number) => void;
   abandonRun: () => void;
   acknowledgeResult: () => void;
+  /** Vygeneruje lucky cells pro daný level z prázdných buněk. */
+  initLuckyCells: (emptyCellPositions: Array<[number, number]>) => void;
+  /** Aktivuje Peek na buňce; vyžaduje powerUp.id === 'peek'. Vrací true pokud uspěl. */
+  activatePeek: (row: number, col: number, correctValue: number) => boolean;
+  /** Aktivuje Shield. Vrací true pokud uspěl. */
+  activateShield: () => boolean;
 }
 
 export type RunStore = RunState & RunActions;
 
+const INITIAL_LEVEL_STATE: LevelState = {
+  firstMistakeForgiven: false,
+  shieldActive: false,
+  peek: null,
+  consumedLuckyCells: [],
+};
+
 const INITIAL_STATE: RunState = {
   run: null,
   result: null,
-  levelState: { firstMistakeForgiven: false },
+  levelState: INITIAL_LEVEL_STATE,
 };
+
+/** Délka peek efektu v ms. */
+const PEEK_DURATION_MS = 3_000;
+/** Bonus za správně vyplněnou lucky cell (gold). */
+const LUCKY_GOLD_REWARD = 30;
+/** Bonus za správně vyplněnou lucky cell (mana). */
+const LUCKY_MANA_REWARD = 4;
+/** Extra HP penalty za špatně vyplněnou lucky cell (přijde nad běžný recordMistake). */
+const LUCKY_PENALTY_HP = 1;
+/** Počet lucky cells na startu levelu. */
+const LUCKY_CELLS_PER_LEVEL = 3;
 
 /**
  * Aplikuje "revive" hooks všech relics, pokud HP klesne na 0.
@@ -107,13 +148,21 @@ function generateRewards(player: PlayerState, rng: Rng): RewardOption[] {
   const options: RewardOption[] = [];
   for (let i = 0; i < 3; i++) {
     const roll = rng();
-    if (roll < 0.45 && available.length > 0) {
+    if (roll < 0.4 && available.length > 0) {
       const idx = Math.floor(rng() * available.length);
       const relicId = available.splice(idx, 1)[0] as RelicId;
       options.push({ kind: 'relic', relicId });
       continue;
     }
-    if (roll < 0.75) {
+    if (roll < 0.6) {
+      const powerUpIdx = Math.floor(rng() * DROPPABLE_POWER_UP_IDS.length);
+      options.push({
+        kind: 'power_up',
+        powerUpId: DROPPABLE_POWER_UP_IDS[powerUpIdx] as PowerUpId,
+      });
+      continue;
+    }
+    if (roll < 0.85) {
       const amount = 30 + Math.floor(rng() * 50);
       options.push({ kind: 'gold', amount });
       continue;
@@ -166,6 +215,16 @@ function applyReward(player: PlayerState, reward: RewardOption): PlayerState {
       const afterHook = hook ? hook(player) : player;
       return { ...afterHook, relics: [...afterHook.relics, newRelic] };
     }
+    case 'power_up': {
+      const hasSpellBook = player.relics.some(
+        (r) => r.id === 'spell_book' && !r.consumed,
+      );
+      const charges = hasSpellBook ? 2 : 1;
+      return {
+        ...player,
+        powerUp: { id: reward.powerUpId, charges },
+      };
+    }
   }
 }
 
@@ -181,6 +240,7 @@ export const useRunStore = create<RunStore>()(
           ...baseStats,
           gold: 0,
           relics: [],
+          powerUp: null,
           combo: 0,
           bestComboInRun: 0,
         };
@@ -193,11 +253,12 @@ export const useRunStore = create<RunStore>()(
           pendingRewards: null,
           elapsedMs: 0,
           totalMistakes: 0,
+          luckyCells: [],
         };
         set({
           run,
           result: null,
-          levelState: { firstMistakeForgiven: false },
+          levelState: { ...INITIAL_LEVEL_STATE, consumedLuckyCells: [] },
         });
       },
 
@@ -211,13 +272,25 @@ export const useRunStore = create<RunStore>()(
         const { run, levelState } = get();
         if (!run) return;
 
+        // Shield power-up — pohltí příští mistake.
+        if (levelState.shieldActive) {
+          set({
+            levelState: { ...levelState, shieldActive: false },
+            run: {
+              ...run,
+              player: { ...run.player, combo: 0 },
+            },
+          });
+          return;
+        }
+
         // Dragon scale — odpouští první chybu v levelu.
         const hasDragonScale = run.player.relics.some(
           (r) => r.id === 'dragon_scale' && !r.consumed,
         );
         if (hasDragonScale && !levelState.firstMistakeForgiven) {
           set({
-            levelState: { firstMistakeForgiven: true },
+            levelState: { ...levelState, firstMistakeForgiven: true },
             run: {
               ...run,
               player: { ...run.player, combo: 0 },
@@ -294,11 +367,21 @@ export const useRunStore = create<RunStore>()(
 
         // Gold bonus za dokončení levelu + případný bonus za rychlost + relic bonusy.
         let bonusGold = LEVEL_END_GOLD_BASE;
-        if (elapsedMs < FAST_LEVEL_THRESHOLD_MS) bonusGold += LEVEL_END_FAST_BONUS;
+        let fastBonus =
+          elapsedMs < FAST_LEVEL_THRESHOLD_MS ? LEVEL_END_FAST_BONUS : 0;
+        let fastMultiplier = 1;
         for (const owned of run.player.relics) {
-          const extra = RELICS[owned.id]?.levelEndBonusGold ?? 0;
-          bonusGold += extra;
+          if (owned.consumed) continue;
+          const def = RELICS[owned.id];
+          bonusGold += def?.levelEndBonusGold ?? 0;
+          if (def?.fastLevelGoldMultiplier) {
+            fastMultiplier = Math.max(
+              fastMultiplier,
+              def.fastLevelGoldMultiplier,
+            );
+          }
         }
+        bonusGold += Math.floor(fastBonus * fastMultiplier);
 
         const updatedNodes = run.nodes.map((n, i) =>
           i === run.currentNodeIndex ? { ...n, completed: true } : n,
@@ -327,7 +410,19 @@ export const useRunStore = create<RunStore>()(
         const option = run.pendingRewards[optionIndex];
         if (!option) return;
 
-        const nextPlayer = applyReward(run.player, option);
+        let nextPlayer = applyReward(run.player, option);
+        // Mana Vial a podobné relics dávající mana na startu dalšího levelu.
+        let manaBoost = 0;
+        for (const owned of nextPlayer.relics) {
+          if (owned.consumed) continue;
+          manaBoost += RELICS[owned.id]?.manaPerLevelStart ?? 0;
+        }
+        if (manaBoost > 0) {
+          nextPlayer = {
+            ...nextPlayer,
+            mana: Math.min(nextPlayer.maxMana, nextPlayer.mana + manaBoost),
+          };
+        }
         const nextNodeIndex = run.currentNodeIndex + 1;
 
         // Pokud byl poslední uzel, run je vyhraný.
@@ -349,8 +444,9 @@ export const useRunStore = create<RunStore>()(
             player: nextPlayer,
             pendingRewards: null,
             currentNodeIndex: nextNodeIndex,
+            luckyCells: [],
           },
-          levelState: { firstMistakeForgiven: false },
+          levelState: { ...INITIAL_LEVEL_STATE, consumedLuckyCells: [] },
         });
       },
 
@@ -367,6 +463,131 @@ export const useRunStore = create<RunStore>()(
 
       acknowledgeResult: () => {
         set({ result: null });
+      },
+
+      initLuckyCells: (emptyCellPositions) => {
+        const { run } = get();
+        if (!run) return;
+        const rng = createRng(run.seed + run.currentNodeIndex * 7919);
+        // Fisher-Yates pick N
+        const positions = emptyCellPositions.slice();
+        for (let i = positions.length - 1; i > 0; i--) {
+          const j = Math.floor(rng() * (i + 1));
+          [positions[i], positions[j]] = [positions[j], positions[i]];
+        }
+        const picked = positions
+          .slice(0, Math.min(LUCKY_CELLS_PER_LEVEL, positions.length))
+          .map(([r, c]) => `${r},${c}`);
+        set({
+          run: { ...run, luckyCells: picked },
+          levelState: { ...get().levelState, consumedLuckyCells: [] },
+        });
+      },
+
+      recordLuckyHit: (row, col, correct) => {
+        const { run, levelState } = get();
+        if (!run) return;
+        const key = `${row},${col}`;
+        if (!run.luckyCells.includes(key)) return;
+        if (levelState.consumedLuckyCells.includes(key)) return;
+
+        const consumed = [...levelState.consumedLuckyCells, key];
+
+        if (correct) {
+          const nextPlayer: PlayerState = {
+            ...run.player,
+            gold: run.player.gold + LUCKY_GOLD_REWARD,
+            mana: Math.min(
+              run.player.maxMana,
+              run.player.mana + LUCKY_MANA_REWARD,
+            ),
+          };
+          set({
+            run: { ...run, player: nextPlayer },
+            levelState: { ...levelState, consumedLuckyCells: consumed },
+          });
+          return;
+        }
+
+        // Špatná lucky cell — extra HP penalty (běžná recordMistake už šla zvlášť).
+        const nextHp = run.player.hp - LUCKY_PENALTY_HP;
+        const nextPlayer: PlayerState = { ...run.player, hp: nextHp };
+        const nextRun = { ...run, player: nextPlayer };
+
+        if (nextHp <= 0) {
+          const revived = tryRevive(nextPlayer);
+          if (revived) {
+            set({
+              run: { ...nextRun, player: revived.player },
+              levelState: { ...levelState, consumedLuckyCells: consumed },
+            });
+            return;
+          }
+          const result = buildRunResult(nextRun, false, run.currentNodeIndex);
+          useProfileStore.getState().recordRunResult(result);
+          set({ run: null, result, levelState: INITIAL_LEVEL_STATE });
+          return;
+        }
+
+        set({
+          run: nextRun,
+          levelState: { ...levelState, consumedLuckyCells: consumed },
+        });
+      },
+
+      activatePeek: (row, col, correctValue) => {
+        const { run, levelState } = get();
+        if (!run || !run.player.powerUp || run.player.powerUp.id !== 'peek') {
+          return false;
+        }
+        const nextCharges = run.player.powerUp.charges - 1;
+        const nextPlayer: PlayerState = {
+          ...run.player,
+          powerUp:
+            nextCharges > 0
+              ? { ...run.player.powerUp, charges: nextCharges }
+              : null,
+        };
+        const until = Date.now() + PEEK_DURATION_MS;
+        set({
+          run: { ...run, player: nextPlayer },
+          levelState: {
+            ...levelState,
+            peek: { row, col, value: correctValue, untilTimestamp: until },
+          },
+        });
+        // Auto-expire — pokud peek nebyl mezitím přepsán, zruš ho.
+        if (typeof window !== 'undefined') {
+          window.setTimeout(() => {
+            const current = get().levelState.peek;
+            if (current && current.untilTimestamp === until) {
+              set({
+                levelState: { ...get().levelState, peek: null },
+              });
+            }
+          }, PEEK_DURATION_MS + 50);
+        }
+        return true;
+      },
+
+      activateShield: () => {
+        const { run, levelState } = get();
+        if (!run || !run.player.powerUp || run.player.powerUp.id !== 'shield') {
+          return false;
+        }
+        const nextCharges = run.player.powerUp.charges - 1;
+        const nextPlayer: PlayerState = {
+          ...run.player,
+          powerUp:
+            nextCharges > 0
+              ? { ...run.player.powerUp, charges: nextCharges }
+              : null,
+        };
+        set({
+          run: { ...run, player: nextPlayer },
+          levelState: { ...levelState, shieldActive: true },
+        });
+        return true;
       },
     }),
     {

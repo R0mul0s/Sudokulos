@@ -26,7 +26,12 @@ export type RelicId =
   | 'copper_ring'
   | 'leather_glove'
   | 'dragon_scale'
-  | 'phoenix';
+  | 'phoenix'
+  | 'silver_chain'
+  | 'mana_vial'
+  | 'flame_crown'
+  | 'spell_book'
+  | 'sharp_eye';
 
 export type RelicRarity = 'common' | 'uncommon' | 'rare';
 
@@ -44,6 +49,14 @@ export interface OwnedRelic {
   consumed: boolean;
 }
 
+export type PowerUpId = 'peek' | 'shield' | 'swap';
+
+export interface PowerUpSlot {
+  id: PowerUpId;
+  /** Kolik nábojů ještě zbývá (1 default; relic Spell Book může dát 2). */
+  charges: number;
+}
+
 /** Stav hráče v aktivním runu. */
 export interface PlayerState {
   characterClass: CharacterClass;
@@ -53,6 +66,8 @@ export interface PlayerState {
   mana: number;
   gold: number;
   relics: OwnedRelic[];
+  /** Maximálně 1 power-up najednou. Null pokud žádný. */
+  powerUp: PowerUpSlot | null;
   /** Živé combo z posledního puzzle levelu (reset mezi levely). */
   combo: number;
   /** Nejvyšší combo za celý run. */
@@ -63,7 +78,8 @@ export interface PlayerState {
 export type RewardOption =
   | { kind: 'relic'; relicId: RelicId }
   | { kind: 'gold'; amount: number }
-  | { kind: 'potion_hp'; amount: number };
+  | { kind: 'potion_hp'; amount: number }
+  | { kind: 'power_up'; powerUpId: PowerUpId };
 
 /** Kompletní snapshot aktivního runu. Perzistuje se. */
 export interface ActiveRun {
@@ -77,6 +93,8 @@ export interface ActiveRun {
   elapsedMs: number;
   /** Cumulative mistakes napříč runem (informativní stat). */
   totalMistakes: number;
+  /** Pozice lucky cells pro aktuální level (`row,col` keys). Reset mezi levely. */
+  luckyCells: string[];
 }
 
 /** Výsledek runu pro statistiky a meta progression. */

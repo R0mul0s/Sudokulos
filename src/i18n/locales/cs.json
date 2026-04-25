@@ -135,7 +135,45 @@
       "phoenix": {
         "name": "Fénix",
         "desc": "Jednou za run při smrti oživne hráče s 1 HP."
+      },
+      "silver_chain": {
+        "name": "Stříbrný řetěz",
+        "desc": "+5 maximální many a okamžitá obnova o 5."
+      },
+      "mana_vial": {
+        "name": "Lahvička many",
+        "desc": "Na začátku každého levelu obnoví 5 many."
+      },
+      "flame_crown": {
+        "name": "Plamenná koruna",
+        "desc": "+25 % bonusového zlata za rychle dokončený level (pod 3 minuty)."
+      },
+      "spell_book": {
+        "name": "Kniha zaklínání",
+        "desc": "Power-up sloty mají 2 nabití místo 1."
+      },
+      "sharp_eye": {
+        "name": "Oko ostrého zraku",
+        "desc": "Zvýraznění sousedních buněk se rozšíří o diagonálně přiléhající."
       }
+    },
+    "powerUp": {
+      "peek": {
+        "name": "Peek",
+        "desc": "Na 3 sekundy odhalí správnou hodnotu vybrané buňky."
+      },
+      "shield": {
+        "name": "Štít",
+        "desc": "Pohltí příští chybu — nesebere HP, neresetuje combo.",
+        "activeTag": "aktivní"
+      },
+      "swap": {
+        "name": "Záměna",
+        "desc": "Prohodí hodnoty dvou buněk. (Brzy.)"
+      }
+    },
+    "luckyCell": {
+      "label": "Šťastná buňka — správná hodnota dá zlato a manu, špatná stojí extra HP."
     },
     "end": {
       "winTitle": "Vítězství!",

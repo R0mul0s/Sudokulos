@@ -24,6 +24,11 @@ const RELIC_EMOJI: Record<RelicId, string> = {
   leather_glove: '🧤',
   dragon_scale: '🛡️',
   phoenix: '🦅',
+  silver_chain: '⛓️',
+  mana_vial: '🧪',
+  flame_crown: '👑',
+  spell_book: '📖',
+  sharp_eye: '👁️',
 };
 
 interface NodePillProps {
