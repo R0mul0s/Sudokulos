@@ -24,17 +24,7 @@ export function useFrostEffect(): void {
   });
 
   useEffect(() => {
-    if (status !== 'playing' || !isFrostActive) {
-      // Při deaktivaci uklidíme zbytkové frozen cells.
-      const current =
-        useRunStore.getState().levelState.frozenCells ?? [];
-      if (current.length > 0) {
-        useRunStore.setState((s) => ({
-          levelState: { ...s.levelState, frozenCells: [] },
-        }));
-      }
-      return;
-    }
+    if (status !== 'playing' || !isFrostActive) return;
     const refresh = () => {
       const currentBoard = useGameStore.getState().board;
       if (!currentBoard) return;
@@ -53,6 +43,12 @@ export function useFrostEffect(): void {
     };
     refresh();
     const id = window.setInterval(refresh, FROST_INTERVAL_MS);
-    return () => window.clearInterval(id);
+    return () => {
+      window.clearInterval(id);
+      // Při ukončení frost efektu (změna nodu, status) vyčistíme zamrzlé buňky.
+      useRunStore.setState((s) => ({
+        levelState: { ...s.levelState, frozenCells: [] },
+      }));
+    };
   }, [status, isFrostActive, freezeRandomCells]);
 }

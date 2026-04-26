@@ -10,13 +10,12 @@ import { useSettingsStore } from '@/store/settingsStore';
 import { useRunStore } from '@/store/runStore';
 import { useGameTimer } from '@/hooks/useGameTimer';
 import { useKeyboardControls } from '@/hooks/useKeyboardControls';
-import { useStormEffect } from '@/hooks/useStormEffect';
-import { useFrostEffect } from '@/hooks/useFrostEffect';
 import { Board } from './Board';
 import { Controls } from './Controls';
 import { NumberPad } from './NumberPad';
 import { Timer } from './Timer';
 import { RunHud } from './rpg/RunHud';
+import { RpgEffectsManager } from './rpg/RpgEffectsManager';
 import { formatElapsed } from './format';
 
 export function GameScreen() {
@@ -34,8 +33,6 @@ export function GameScreen() {
 
   useGameTimer();
   useKeyboardControls();
-  useStormEffect();
-  useFrostEffect();
 
   const showCompleted = status === 'completed';
   const showFailed = status === 'failed';
@@ -59,6 +56,7 @@ export function GameScreen() {
       </header>
 
       {runActive && <RunHud />}
+      {runActive && <RpgEffectsManager />}
 
       <Timer />
 

@@ -19,6 +19,9 @@ import { Cell } from './Cell';
 import { CageOverlay } from './killer/CageOverlay';
 import { ChainFlashOverlay } from './rpg/ChainFlashOverlay';
 
+/** Sdílená prázdná reference pro selektory — stabilní napříč rendery. */
+const EMPTY_STRING_ARRAY: readonly string[] = [];
+
 function isPeer(
   row: number,
   col: number,
@@ -49,10 +52,16 @@ export function Board() {
   const selected = useGameStore((s) => s.selected);
   const selectCell = useGameStore((s) => s.selectCell);
   const highlightSameDigits = useSettingsStore((s) => s.highlightSameDigits);
-  const luckyCells = useRunStore((s) => s.run?.luckyCells ?? []);
-  const consumedLucky = useRunStore((s) => s.levelState.consumedLuckyCells);
+  const luckyCells = useRunStore(
+    (s) => s.run?.luckyCells ?? EMPTY_STRING_ARRAY,
+  );
+  const consumedLucky = useRunStore(
+    (s) => s.levelState.consumedLuckyCells ?? EMPTY_STRING_ARRAY,
+  );
   const peek = useRunStore((s) => s.levelState.peek);
-  const frozenCells = useRunStore((s) => s.levelState.frozenCells);
+  const frozenCells = useRunStore(
+    (s) => s.levelState.frozenCells ?? EMPTY_STRING_ARRAY,
+  );
   const isDarkEffect = useRunStore((s) => {
     if (!s.run) return false;
     const node = s.run.nodes[s.run.currentNodeIndex];
