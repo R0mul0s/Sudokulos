@@ -85,7 +85,10 @@ export function Board() {
     return set;
   }, [luckyCells, consumedLucky]);
 
-  const frozenSet = useMemo(() => new Set(frozenCells), [frozenCells]);
+  const frozenSet = useMemo(
+    () => new Set(frozenCells ?? []),
+    [frozenCells],
+  );
 
   if (!board) return null;
 

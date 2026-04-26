@@ -1084,11 +1084,41 @@ export const useRunStore = create<RunStore>()(
     {
       name: 'sudoku.run',
       storage: createJSONStorage(() => localStorage),
-      version: 1,
+      version: 2,
       partialize: (state) => ({
         run: state.run,
         levelState: state.levelState,
       }),
+      migrate: (persisted, version) => {
+        const old = persisted as Partial<RunState>;
+        if (version < 2) {
+          // Doplníme nová pole v levelState (frozenCells přibyl ve fázi 8.3 polish).
+          return {
+            ...old,
+            levelState: {
+              ...INITIAL_LEVEL_STATE,
+              ...(old.levelState ?? {}),
+              frozenCells: old.levelState?.frozenCells ?? [],
+            },
+          } as RunState;
+        }
+        return persisted as RunState;
+      },
+      merge: (persisted, current) => {
+        // Defenzivně sjednotíme levelState s aktuálním schématem, aby případná
+        // chybějící pole (přidaná po vydání) nezpůsobila runtime undefined access.
+        if (!persisted || typeof persisted !== 'object') return current;
+        const p = persisted as Partial<RunState>;
+        return {
+          ...current,
+          run: p.run ?? current.run,
+          result: p.result ?? current.result,
+          levelState: {
+            ...INITIAL_LEVEL_STATE,
+            ...(p.levelState ?? {}),
+          },
+        };
+      },
     },
   ),
 );

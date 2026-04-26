@@ -26,7 +26,8 @@ export function useFrostEffect(): void {
   useEffect(() => {
     if (status !== 'playing' || !isFrostActive) {
       // Při deaktivaci uklidíme zbytkové frozen cells.
-      const current = useRunStore.getState().levelState.frozenCells;
+      const current =
+        useRunStore.getState().levelState.frozenCells ?? [];
       if (current.length > 0) {
         useRunStore.setState((s) => ({
           levelState: { ...s.levelState, frozenCells: [] },
